@@ -430,8 +430,15 @@ server:
 3. With your dev server running (`npm run dev`), in a **separate**
    terminal run:
    ```bash
-   stripe listen --forward-to localhost:3000/api/webhooks/stripe
+   stripe listen --events checkout.session.completed --forward-to localhost:3000/api/webhooks/stripe
    ```
+   **The `--events` flag is required on current CLI versions** (it
+   wasn't on older ones) — without it you'll get `must specify events
+   to forward using --events, --all-snapshot, or --all-thin` and the
+   listener won't start at all. `checkout.session.completed` is the
+   only event this app's webhook handler acts on, so naming it
+   specifically (rather than `--all-snapshot`, which forwards every
+   event type Stripe has) keeps the terminal output relevant.
 4. It prints a webhook signing secret starting `whsec_...` — put that
    in `.env.local` as `STRIPE_WEBHOOK_SECRET`. **This is a different
    secret from the one you'll use in production** — the CLI generates
@@ -470,29 +477,39 @@ keys, separate webhook configuration, separate everything. Test mode
 proves the *code* works; this step is what actually takes real
 payments.
 
-1. In the Stripe dashboard, go to **Developers → Webhooks → Add
-   endpoint**. URL: `https://your-production-domain/api/webhooks/stripe`.
-   Select the `checkout.session.completed` event specifically (no need
-   to send every event type).
-2. Stripe shows you that endpoint's own signing secret (`whsec_...`) —
-   this is different again from your local CLI one. Add it to Vercel's
-   environment variables as `STRIPE_WEBHOOK_SECRET`.
-3. Toggle the Stripe dashboard **out of Test mode**. Go to Developers →
+1. In the Stripe dashboard, go to the **Webhooks** tab under
+   **Workbench**, then click **"+ Add destination"**. (Stripe renamed
+   "webhook endpoints" to "event destinations" as part of this newer
+   Workbench interface — same feature, newer name. You may also see
+   an entry here for your local `stripe listen` CLI session, listed
+   alongside real destinations since Workbench treats "local listener"
+   as one of several destination types — that's not something you
+   created and can be ignored; it's just your earlier local testing.)
+2. Work through the short wizard: event source **"Your account"**,
+   destination type **"Webhook endpoint"**, event
+   `checkout.session.completed` specifically (no need to send every
+   event type), and the URL
+   `https://your-production-domain/api/webhooks/stripe`.
+3. Once created, that destination's own page shows its signing secret
+   (`whsec_...`) — different again from your local CLI one. Add it to
+   Vercel's environment variables as `STRIPE_WEBHOOK_SECRET`.
+4. Toggle the Stripe dashboard **out of Test mode**. Go to Developers →
    API keys again — you'll see a *different* secret key here, starting
    `sk_live_...`. Add that to Vercel as `STRIPE_SECRET_KEY`, replacing
    the test one.
-4. Add `STRIPE_PRICE_GBP` (and `STRIPE_PRODUCT_NAME` if you set one) to
+5. Add `STRIPE_PRICE_GBP` (and `STRIPE_PRODUCT_NAME` if you set one) to
    Vercel too.
-5. Redeploy, then make one real, small payment yourself to confirm the
+6. Redeploy, then make one real, small payment yourself to confirm the
    whole path works with real money before telling anyone else it's
    live.
 
 ### Where to check if something goes wrong
 
-The Stripe dashboard (Developers → Webhooks → click your endpoint)
-shows every webhook attempt, its response code, and — critically — the
-full response body your server sent back, which is usually enough to
-diagnose a problem without needing to reproduce it. This works in both
+In the Stripe dashboard, Workbench → Webhooks → click your destination
+shows every delivery attempt, its response code, and — critically —
+the full response body your server sent back, which is usually enough
+to diagnose a problem without needing to reproduce it. This works in
+both
 test and live mode independently.
 
 ## Getting started
@@ -610,16 +627,38 @@ deployed instance) has both set.
 **Stripe: payment goes through, but access doesn't unlock.** This
 almost always means the webhook never reached your server, or its
 signature check failed. Check:
-- Locally: is `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
+- Locally: is `stripe listen --events checkout.session.completed --forward-to localhost:3000/api/webhooks/stripe`
   actually running in its own terminal, and does `STRIPE_WEBHOOK_SECRET`
   match what *that* command printed (not a dashboard one)?
-- In production: in the Stripe dashboard, Developers → Webhooks →
-  your endpoint shows every delivery attempt and the exact response
+- In production: in the Stripe dashboard, Workbench → Webhooks →
+  your destination shows every delivery attempt and the exact response
   your server sent back — this is the fastest way to see what actually
   went wrong, rather than guessing.
 - A common mistake: using the test-mode webhook secret in a live-mode
   deployment, or vice versa — they're different values even for the
   same endpoint URL.
+
+**`stripe listen` fails with "must specify events to forward using
+--events, --all-snapshot, or --all-thin".** A behaviour change on
+current Stripe CLI versions — older versions defaulted to forwarding
+every event type if you didn't specify any; current ones refuse to
+start at all until you do. Add `--events checkout.session.completed`
+(the only event this app's webhook handler uses) to the command, as
+shown in "Setting up Stripe" above.
+
+**Windows: `stripe` (or any other freshly-installed command) isn't
+recognized, even right after `winget install` succeeds.** `winget`
+doesn't always add the install folder to your PATH, and even when it
+does, an already-open terminal won't see the change — only a genuinely
+new one will. If a brand-new terminal still doesn't recognize it,
+`winget install` again with an unchanged package (or `winget list
+<package>`) still confirms the program IS actually installed — the
+problem is specifically that PowerShell doesn't know where to look for
+it, not that the install failed. Find the real install folder (often
+under `%LOCALAPPDATA%\Microsoft\WinGet\Packages\...`) and add it to
+your PATH via Windows' own "Edit environment variables for your
+account" dialog, rather than trying to fix it from inside PowerShell —
+a typo in a PowerShell-based PATH edit can corrupt the whole variable.
 
 **The "Manage tax years" link is missing right after signing in, but
 appears after signing out and back in.** Both `app/page.tsx` and
