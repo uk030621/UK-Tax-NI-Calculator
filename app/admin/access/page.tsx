@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { AdminAccessForm } from "@/components/AdminAccessForm";
+import { AdminSiteSettingsForm } from "@/components/AdminSiteSettingsForm";
 
 // Same reasoning as app/page.tsx and app/admin/tax-years/page.tsx: this
 // page's entire authorization check depends on a fresh session read
@@ -47,12 +48,17 @@ export default async function AdminAccessPage() {
           Manage access
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Control who can sign in and use the calculator. Changes here
+          Control who can sign in and use the calculator, and the business
+          details shown on your Terms and Privacy pages. Changes here
           take effect immediately, no redeploy needed.
         </p>
       </header>
 
       <AdminAccessForm />
+
+      <div className="mt-10">
+        <AdminSiteSettingsForm />
+      </div>
 
       <footer className="mt-12 text-center text-xs text-slate-400">
         © {new Date().getFullYear()} UK Tax &amp; NI Calculator. All rights reserved.

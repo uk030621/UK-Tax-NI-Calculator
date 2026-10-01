@@ -261,6 +261,15 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
         Figures are illustrative and based on published HMRC rates. Not a
         substitute for professional tax advice.
       </p>
+      <p className="mt-2 text-center text-xs text-slate-400">
+        <a href="/terms" className="font-medium text-brand-600 hover:text-brand-700">
+          Terms of Service
+        </a>
+        {" · "}
+        <a href="/privacy" className="font-medium text-brand-600 hover:text-brand-700">
+          Privacy Policy
+        </a>
+      </p>
     </div>
   );
 }

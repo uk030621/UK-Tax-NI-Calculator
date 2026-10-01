@@ -143,6 +143,15 @@ export default async function Home({
           Figures are illustrative and based on published HMRC rates. Not a
           substitute for professional tax advice.
         </p>
+        <p>
+          <a href="/terms" className="font-medium text-brand-600 hover:text-brand-700">
+            Terms of Service
+          </a>
+          {" · "}
+          <a href="/privacy" className="font-medium text-brand-600 hover:text-brand-700">
+            Privacy Policy
+          </a>
+        </p>
         {isAdmin && (
           <div className="flex gap-4">
             <a href="/admin/tax-years" className="font-medium text-brand-600 hover:text-brand-700">
