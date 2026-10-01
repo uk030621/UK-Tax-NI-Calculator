@@ -9,3 +9,23 @@
 * {
   box-sizing: border-box;
 }
+
+/*
+ * iOS Safari automatically zooms the whole page in when a text input,
+ * textarea or select is focused if its font-size is under 16px, then
+ * zooms back out on blur — this is what shows up as the page visibly
+ * "jumping" or content nudging outside the screen while typing. It's a
+ * Safari behaviour, not something layout/spacing changes can fix.
+ *
+ * !important is deliberate here, not a shortcut: this needs to beat
+ * Tailwind's text-sm (14px) utility class wherever it's applied
+ * directly to a field, for every current and future input in the app,
+ * without relying on every component remembering to opt in. 16px is a
+ * perfectly normal size for form fields on desktop too, so this isn't
+ * scoped to small screens only.
+ */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
