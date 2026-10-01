@@ -1,9 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+// Used only for display headlines on the marketing/landing content shown
+// to signed-out or not-yet-approved visitors (see components/LandingContent.tsx)
+// — Inter remains the body font everywhere, including inside that same
+// content, so the rest of the app's type system is untouched.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-serif",
+});
 
 export const metadata: Metadata = {
   title: "UK Tax & NI Calculator",
@@ -22,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
       <body className="min-h-screen bg-gradient-to-b from-brand-50 to-white font-sans text-slate-900">
         <Providers>{children}</Providers>
       </body>

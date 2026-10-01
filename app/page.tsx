@@ -6,6 +6,7 @@ import { TaxCalculatorForm } from "@/components/TaxCalculatorForm";
 import { AuthButton } from "@/components/AuthButton";
 import { ExclusionsDropdown } from "@/components/ExclusionsDropdown";
 import { BuyAccessButton } from "@/components/BuyAccessButton";
+import { LandingContent } from "@/components/LandingContent";
 
 // This page's access gate depends on a fresh session read on every
 // request. getServerSession() reads a cookie deep inside NextAuth's
@@ -53,56 +54,66 @@ export default async function Home({
 
   if (!signedIn || !allowed) {
     const priceLabel = getPriceLabel();
+    const ctaSlot = !signedIn ? (
+      <AuthButton />
+    ) : priceLabel ? (
+      <BuyAccessButton priceLabel={priceLabel} />
+    ) : undefined;
 
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 py-10 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          UK Tax &amp; NI Calculator
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Sign in with Google to use this calculator.
-        </p>
+      <main className="mx-auto min-h-screen px-4 py-10">
+        <div className="mx-auto flex max-w-md flex-col items-center text-center">
+          <h1 className="font-serif text-3xl text-slate-900">
+            UK Tax &amp; NI Calculator
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Most calculators handle your salary. This one handles your
+            actual life — sign in with Google to get started.
+          </p>
 
-        {!signedIn && (
-          <div className="mt-6">
-            <AuthButton />
-          </div>
-        )}
-
-        {signedIn && !allowed && (
-          <>
-            <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
-              You're signed in as {session?.user?.email}, but that
-              account doesn't have access yet.
-            </p>
-
-            {payment === "success" && (
-              <p className="mt-4 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">
-                Payment received — this can take a few seconds to unlock.
-                Refresh the page shortly; if it's still showing this
-                message after a minute or two, get in touch.
-              </p>
-            )}
-            {payment === "cancelled" && (
-              <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                Checkout cancelled — no charge was made. You can try
-                again whenever you're ready.
-              </p>
-            )}
-
-            {priceLabel && <BuyAccessButton priceLabel={priceLabel} />}
-
-            <p className="mt-4 text-xs text-slate-400">
-              Already paid, or expecting access another way? Ask
-              whoever administers this app to add your email at{" "}
-              <span className="font-medium">/admin/access</span>.
-            </p>
-
+          {!signedIn && (
             <div className="mt-6">
               <AuthButton />
             </div>
-          </>
-        )}
+          )}
+
+          {signedIn && !allowed && (
+            <>
+              <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                You're signed in as {session?.user?.email}, but that
+                account doesn't have access yet.
+              </p>
+
+              {payment === "success" && (
+                <p className="mt-4 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                  Payment received — this can take a few seconds to
+                  unlock. Refresh the page shortly; if it's still showing
+                  this message after a minute or two, get in touch.
+                </p>
+              )}
+              {payment === "cancelled" && (
+                <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                  Checkout cancelled — no charge was made. You can try
+                  again whenever you're ready.
+                </p>
+              )}
+
+              {priceLabel && <BuyAccessButton priceLabel={priceLabel} />}
+
+              <p className="mt-4 text-xs text-slate-400">
+                Already paid, or expecting access another way? Ask
+                whoever administers this app to add your email at{" "}
+                <span className="font-medium">/admin/access</span>.
+              </p>
+
+              <div className="mt-6">
+                <AuthButton />
+              </div>
+            </>
+          )}
+        </div>
+
+        <LandingContent priceLabel={priceLabel} ctaSlot={ctaSlot} />
       </main>
     );
   }
