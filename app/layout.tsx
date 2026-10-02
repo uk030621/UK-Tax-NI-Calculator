@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Fraunces } from "next/font/google";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -24,15 +26,23 @@ export const viewport: Viewport = {
   themeColor: "#3454d1",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Resolved once, here, for every page — each page that also calls
+  // getServerSession() itself (app/page.tsx, the admin pages) still
+  // does so for its own access-control logic, which is unrelated to
+  // this: this copy exists purely to seed the client-side session
+  // context below, so components like AuthButton never start from an
+  // unknown "loading" state on first paint.
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
       <body className="min-h-screen bg-gradient-to-b from-brand-50 to-white font-sans text-slate-900">
-        <Providers>{children}</Providers>
+        <Providers session={session}>{children}</Providers>
       </body>
     </html>
   );
