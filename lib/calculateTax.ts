@@ -272,6 +272,12 @@ export interface CalculationResult {
     giftAidDonationsNet: number;
     giftAidDonationsGross: number;
     bandExtension: number; // total amount every band above the first was widened by
+    // Higher/additional-rate relief this pension contribution unlocks,
+    // on top of the 20% the provider already added automatically —
+    // see the comment above its calculation for exactly what it
+    // compares. £0 for a basic-rate taxpayer: correct, not a bug —
+    // there's nothing further for them to claim.
+    additionalPensionRelief: number;
   };
 
   hicbc: {
@@ -388,7 +394,11 @@ function personalSavingsAllowanceForTotalIncome(
 
 export function calculateMultiIncomeTax(
   input: MultiIncomeInput,
-  rates: TaxYearRates
+  rates: TaxYearRates,
+  // Internal use only — true on the recursive "what if this pension
+  // contribution hadn't been made" comparison run below, so that run
+  // doesn't try to compute a comparison of its own and recurse forever.
+  _skipPensionReliefComparison = false
 ): CalculationResult {
   const employmentIncome = Math.max(0, input.employmentIncome ?? 0);
   const pensionIncome = Math.max(0, input.pensionIncome ?? 0);
@@ -829,7 +839,7 @@ export function calculateMultiIncomeTax(
       ? totalDeductions / (totalGrossIncome + netGainsAfterCurrentYearLosses)
       : 0;
 
-  return {
+  const result: CalculationResult = {
     taxYear: rates.taxYear,
     region: rates.region,
     personalAllowance,
@@ -933,6 +943,7 @@ export function calculateMultiIncomeTax(
       giftAidDonationsNet,
       giftAidDonationsGross,
       bandExtension,
+      additionalPensionRelief: 0, // placeholder — set for real just below, once `result` exists to compare against
     },
 
     hicbc: {
@@ -958,4 +969,43 @@ export function calculateMultiIncomeTax(
       recipientAppearsEligible: marriageAllowanceRecipientAppearsEligible,
     },
   };
+
+  // Additional (higher/additional-rate) pension relief: how much extra
+  // comes back beyond the 20% the provider already added automatically.
+  // The 20% top-up happens inside the pension wrapper and never appears
+  // in this income tax calculation at all — so it's NOT something to
+  // subtract out here. The full benefit of the band-widening (income
+  // tax, savings, dividends, CGT) plus its knock-on effect on the High
+  // Income Child Benefit Charge and student loan repayments (both use
+  // the same post-band-extension income figure — see
+  // totalIncomeForTaper above) IS the number a higher-rate taxpayer is
+  // entitled to claim back, in full.
+  //
+  // Computed by re-running this same, already-validated calculation
+  // with the pension contribution's band-widening removed — comparing
+  // tax on identical income with and without it — rather than a
+  // second, separately-maintained formula that could drift out of sync
+  // with the real one above.
+  let additionalPensionRelief = 0;
+  if (personalPensionContributionsNet > 0 && !_skipPensionReliefComparison) {
+    const withoutPension = calculateMultiIncomeTax(
+      { ...input, personalPensionContributions: 0 },
+      rates,
+      true
+    );
+    const totalWith =
+      result.totalIncomeTax +
+      result.capitalGainsTax.tax +
+      result.hicbc.charge +
+      result.studentLoan.totalRepayment;
+    const totalWithout =
+      withoutPension.totalIncomeTax +
+      withoutPension.capitalGainsTax.tax +
+      withoutPension.hicbc.charge +
+      withoutPension.studentLoan.totalRepayment;
+    additionalPensionRelief = Math.max(0, totalWithout - totalWith);
+  }
+  result.reliefAtSource.additionalPensionRelief = additionalPensionRelief;
+
+  return result;
 }

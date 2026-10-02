@@ -450,7 +450,7 @@ export function TaxCalculatorForm() {
           />
           <p className="-mt-3 text-xs text-slate-400">
             Use your taxable pay — the &quot;pay&quot; figure on your P60, which is already
-            after any pension contributions taken from your payslip before tax.
+            after any pension contributions (including AVCs) taken from your payslip before tax.
             Paying into a personal pension or SIPP yourself? That goes under
             Reliefs, in the &quot;Add…&quot; section below.
           </p>
@@ -877,12 +877,15 @@ export function TaxCalculatorForm() {
                 />
                 <p className="mt-1.5 text-xs text-slate-400">
                   Only for "relief at source" pensions — most personal
-                  pensions/SIPPs, and some workplace schemes. Enter the
-                  amount you actually paid; basic-rate relief is added
-                  automatically and doesn't need entering here.
+                  pensions/SIPPs, some workplace schemes, and some AVCs
+                  (Additional Voluntary Contributions) paid to a separate
+                  provider. Enter the amount you actually paid; basic-rate
+                  relief is added automatically and doesn't need entering
+                  here.
                   <strong className="text-slate-500">
-                    {" "}Don't enter workplace pension contributions already
-                    taken from your payslip before tax
+                    {" "}Don't enter workplace pension contributions —
+                    including most AVCs paid into your main scheme —
+                    already taken from your payslip before tax
                   </strong>{" "}
                   ("net pay arrangement," most auto-enrolment schemes) —
                   those are already reflected in your Employment income
@@ -1345,6 +1348,19 @@ function ResultCard({ result }: { result: CalculationResult }) {
             </span>
             <span className="font-medium text-slate-800">
               {GBP.format(result.studentLoan.totalRepayment)}
+            </span>
+          </div>
+        )}
+
+        {result.reliefAtSource.personalPensionContributionsNet > 0 && (
+          <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm">
+            <span className="text-emerald-700">
+              {result.reliefAtSource.additionalPensionRelief > 0
+                ? "Additional pension relief you can claim, beyond the 20% your provider already added"
+                : "No further pension relief to claim — you're already a basic-rate taxpayer, so you've had the relief you're due"}
+            </span>
+            <span className="font-medium text-emerald-800">
+              {GBP.format(result.reliefAtSource.additionalPensionRelief)}
             </span>
           </div>
         )}

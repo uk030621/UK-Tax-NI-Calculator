@@ -167,6 +167,67 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
           </p>
         </div>
 
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-xs font-semibold text-slate-400">
+            A second worked example — higher-rate pension relief (including AVCs)
+          </p>
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-slate-600">
+            <span>A higher-rate taxpayer earning</span>
+            <span className="font-medium text-slate-900">£80,000</span>
+            <span>who pays</span>
+            <span className="font-medium text-slate-900">£8,000</span>
+            <span>
+              into a relief-at-source pension or AVC scheme (£10,000 once
+              the 20% their provider already added is included) is owed a
+              further
+            </span>
+          </div>
+          <p className="mt-1 font-serif text-3xl text-slate-900">£2,000</p>
+          <p className="mt-1 text-sm text-slate-500">
+            — the difference between the 40% relief they&rsquo;re entitled
+            to and the 20% their provider already applied automatically.
+            Our calculator works this out for you — look for{" "}
+            <strong className="text-slate-700">
+              &ldquo;Additional pension relief&rdquo;
+            </strong>{" "}
+            in your results, with no manual grossing-up required.
+          </p>
+
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <p className="text-xs font-semibold text-slate-500">
+              How to actually get this money back
+            </p>
+            <ol className="mt-2 space-y-2 text-sm text-slate-600">
+              <li>
+                <strong className="text-slate-800">1. Check your scheme type.</strong>{" "}
+                This only applies to relief-at-source contributions. Net
+                pay or salary sacrifice contributions already give you
+                full relief automatically — nothing further to claim.
+              </li>
+              <li>
+                <strong className="text-slate-800">2. Use the figure our calculator gives you</strong>{" "}
+                — no need to work out the grossing-up by hand.
+              </li>
+              <li>
+                <strong className="text-slate-800">3. Submit it to HMRC</strong>{" "}
+                — through your Self Assessment return, or via your online
+                HMRC Personal Tax Account if you don&rsquo;t normally file
+                one.
+              </li>
+              <li>
+                <strong className="text-slate-800">4. Check previous years too.</strong>{" "}
+                If you&rsquo;ve never claimed before, you can usually
+                backdate unclaimed relief up to 4 previous tax years.
+              </li>
+            </ol>
+            <p className="mt-3 text-xs text-slate-400">
+              General information on how the process typically works, not
+              personalised advice — HMRC&rsquo;s own guidance, or an
+              accountant, can confirm the right route for your situation.
+            </p>
+          </div>
+        </div>
+
         <div className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
           {CHECKED_ITEMS.map((item, i) => (
             <div key={i} className="flex items-start gap-3">
