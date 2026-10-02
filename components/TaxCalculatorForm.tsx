@@ -134,6 +134,14 @@ export function TaxCalculatorForm() {
   const [taxYear, setTaxYear] = useState<string>("");
   const [region, setRegion] = useState<Region>("uk");
   const [income, setIncome] = useState<IncomeFields>(emptyIncome);
+  // Whether the pension contribution field below holds the amount the
+  // user actually paid ("net") or the total already including the 20%
+  // their provider added ("gross") — see MoneyField's conversion at
+  // submission time. Always reset to "net" alongside the income state
+  // itself (loadEntryIntoForm, startNewCalculation) — a saved
+  // calculation's stored figure is always net, so defaulting back to
+  // "net" is the only interpretation that's never silently wrong.
+  const [pensionEntryMode, setPensionEntryMode] = useState<"net" | "gross">("net");
   const [showOtherIncome, setShowOtherIncome] = useState(false);
   const [showExpenses, setShowExpenses] = useState(false);
   const [rentalExpenses, setRentalExpenses] = useState<Record<string, string>>(emptyExpenses);
@@ -219,6 +227,7 @@ export function TaxCalculatorForm() {
       giftAidDonations: entry.reliefAtSource?.giftAidDonationsNet ? String(entry.reliefAtSource.giftAidDonationsNet) : "",
       childBenefitReceived: entry.hicbc?.childBenefitReceived ? String(entry.hicbc.childBenefitReceived) : "",
     });
+    setPensionEntryMode("net"); // stored figures are always net — see declaration above
     setMainResidenceFullyExempt(Boolean(entry.capitalGainsTax?.mainResidenceExempt));
     setStudentLoanPlan(entry.studentLoan?.plan ?? "none");
     setHasPostgraduateLoan(Boolean(entry.studentLoan?.hasPostgraduateLoan));
@@ -255,6 +264,7 @@ export function TaxCalculatorForm() {
   function startNewCalculation() {
     setEditingId(null);
     setIncome(emptyIncome);
+    setPensionEntryMode("net");
     setRentalExpenses(emptyExpenses);
     setBusinessExpenses(emptyBusinessExpenses);
     setMainResidenceFullyExempt(false);
@@ -365,7 +375,10 @@ export function TaxCalculatorForm() {
       capitalGains: Number(income.capitalGains) || 0,
       capitalLossesThisYear: Number(income.capitalLossesThisYear) || 0,
       capitalLossesBroughtForward: Number(income.capitalLossesBroughtForward) || 0,
-      personalPensionContributions: Number(income.personalPensionContributions) || 0,
+      personalPensionContributions:
+        pensionEntryMode === "gross"
+          ? (Number(income.personalPensionContributions) || 0) * 0.8
+          : Number(income.personalPensionContributions) || 0,
       giftAidDonations: Number(income.giftAidDonations) || 0,
       mainResidenceGain: Number(income.mainResidenceGain) || 0,
       mainResidenceFullyExempt,
@@ -869,19 +882,51 @@ export function TaxCalculatorForm() {
 
               <div className="border-t border-slate-200 pt-4">
                 <CategoryHeader label="Reliefs" />
+
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Personal pension contributions (relief at source)
+                </label>
+                <div className="mb-2 flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+                  {(["net", "gross"] as const).map((mode) => (
+                    <button
+                      type="button"
+                      key={mode}
+                      onClick={() => setPensionEntryMode(mode)}
+                      className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition ${
+                        pensionEntryMode === mode
+                          ? "bg-white text-brand-700 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      {mode === "net" ? "I know what I paid" : "I know the total, incl. relief"}
+                    </button>
+                  ))}
+                </div>
                 <MoneyField
-                  label="Personal pension contributions (relief at source)"
                   value={income.personalPensionContributions}
                   onChange={(v) => updateField("personalPensionContributions", v)}
-                  placeholder="e.g. 4,000"
+                  placeholder={pensionEntryMode === "gross" ? "e.g. 5,000" : "e.g. 4,000"}
                 />
+                {pensionEntryMode === "gross" && (
+                  <p className="mt-1.5 text-xs text-brand-600">
+                    Enter the full amount sitting in the pot — the figure
+                    your pension statement shows as the total contribution.
+                    We&rsquo;ll work out the relief from there; no need to
+                    subtract the 20% yourself.
+                  </p>
+                )}
                 <p className="mt-1.5 text-xs text-slate-400">
                   Only for "relief at source" pensions — most personal
                   pensions/SIPPs, some workplace schemes, and some AVCs
                   (Additional Voluntary Contributions) paid to a separate
-                  provider. Enter the amount you actually paid; basic-rate
-                  relief is added automatically and doesn't need entering
-                  here.
+                  provider.
+                  {pensionEntryMode === "net" && (
+                    <>
+                      {" "}Enter the amount you actually paid; basic-rate
+                      relief is added automatically and doesn't need
+                      entering here.
+                    </>
+                  )}
                   <strong className="text-slate-500">
                     {" "}Don't enter workplace pension contributions —
                     including most AVCs paid into your main scheme —
@@ -1077,16 +1122,18 @@ function MoneyField({
   onChange,
   placeholder,
 }: {
-  label: string;
+  label?: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-slate-700">
-        {label}
-      </label>
+      {label && (
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {label}
+        </label>
+      )}
       <div className="relative">
         <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
           £

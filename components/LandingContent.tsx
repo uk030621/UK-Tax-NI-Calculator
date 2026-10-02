@@ -161,6 +161,27 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
             — 80% of the £2,212.60 received, clawed back because £76,000
             is 80% of the way through the £60,000&ndash;£80,000 taper.
           </p>
+
+          <div className="mt-4 rounded-xl bg-brand-50 px-4 py-3">
+            <p className="text-xs font-semibold text-brand-700">
+              Try it yourself — enter exactly these two fields
+            </p>
+            <dl className="mt-2 space-y-1 text-sm text-slate-700">
+              <div className="flex justify-between gap-3">
+                <dt>&ldquo;Employment income (salary)&rdquo;</dt>
+                <dd className="font-medium">£76,000</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>&ldquo;Child Benefit received this year&rdquo;</dt>
+                <dd className="font-medium">£2,212.60</dd>
+              </div>
+            </dl>
+            <p className="mt-2 text-xs text-slate-500">
+              That second field is under &ldquo;+ Add…&rdquo; → Child
+              Benefit.
+            </p>
+          </div>
+
           <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-400">
             Matches HMRC&rsquo;s own published figures for this exact
             scenario — not a rounded approximation.
@@ -192,6 +213,30 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
             </strong>{" "}
             in your results, with no manual grossing-up required.
           </p>
+
+          <div className="mt-4 rounded-xl bg-brand-50 px-4 py-3">
+            <p className="text-xs font-semibold text-brand-700">
+              Try it yourself — enter exactly these two fields
+            </p>
+            <dl className="mt-2 space-y-1 text-sm text-slate-700">
+              <div className="flex justify-between gap-3">
+                <dt>&ldquo;Employment income (salary)&rdquo;</dt>
+                <dd className="font-medium">£80,000</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>&ldquo;Personal pension contributions (relief at source)&rdquo;</dt>
+                <dd className="font-medium">£8,000</dd>
+              </div>
+            </dl>
+            <p className="mt-2 text-xs text-slate-500">
+              That second field is under &ldquo;+ Add…&rdquo; → Reliefs. A
+              toggle above it lets you enter either figure — £8,000 if
+              that&rsquo;s what you know you paid, or £10,000 if that&rsquo;s
+              the total your pension statement shows. The calculator
+              converts between them either way, so there&rsquo;s nothing to
+              work out by hand.
+            </p>
+          </div>
 
           <div className="mt-4 border-t border-slate-100 pt-4">
             <p className="text-xs font-semibold text-slate-500">

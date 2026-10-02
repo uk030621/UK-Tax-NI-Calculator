@@ -225,6 +225,11 @@
   .claim-steps li { margin-bottom: 8px; }
   .claim-steps li strong { color: var(--ink); }
   .claim-steps-foot { margin-top: 12px; font-size: 12.5px; color: var(--muted); }
+  .try-it { margin-top: 16px; border-radius: 10px; background: color-mix(in srgb, var(--brand) 10%, transparent); padding: 12px 16px; }
+  .try-it-label { font-size: 12.5px; font-weight: 600; color: var(--brand); margin: 0 0 8px; }
+  .try-it-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+  .try-it-row span:last-child { font-weight: 500; }
+  .try-it-foot { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
 
   /* pricing */
   .price-block {
@@ -331,6 +336,12 @@
         <p class="example-setup">A household earning <strong>£76,000</strong>, receiving <strong>£2,212.60</strong> of Child Benefit over the year, owes an extra</p>
         <div class="example-total">£1,770.08</div>
         <p class="example-note">— 80% of the £2,212.60 received, clawed back because £76,000 is 80% of the way through the £60,000&ndash;£80,000 taper.</p>
+        <div class="try-it">
+          <p class="try-it-label">Try it yourself — enter exactly these two fields</p>
+          <div class="try-it-row"><span>"Employment income (salary)"</span><span>£76,000</span></div>
+          <div class="try-it-row"><span>"Child Benefit received this year"</span><span>£2,212.60</span></div>
+          <p class="try-it-foot">That second field is under "+ Add…" → Child Benefit.</p>
+        </div>
         <div class="example-foot">Matches HMRC's own published figures for this exact scenario — not a rounded approximation.</div>
       </div>
 
@@ -339,6 +350,12 @@
         <p class="example-setup">A higher-rate taxpayer earning <strong>£80,000</strong> who pays <strong>£8,000</strong> into a relief-at-source pension or AVC scheme (£10,000 once the 20% their provider already added is included) is owed a further</p>
         <div class="example-total">£2,000</div>
         <p class="example-note">— the difference between the 40% relief they're entitled to and the 20% their provider already applied automatically. Our calculator works this out for you — look for <strong>"Additional pension relief"</strong> in your results, with no manual grossing-up required.</p>
+        <div class="try-it">
+          <p class="try-it-label">Try it yourself — enter exactly these two fields</p>
+          <div class="try-it-row"><span>"Employment income (salary)"</span><span>£80,000</span></div>
+          <div class="try-it-row"><span>"Personal pension contributions (relief at source)"</span><span>£8,000</span></div>
+          <p class="try-it-foot">That second field is under "+ Add…" → Reliefs. A toggle above it lets you enter either figure — £8,000 if that's what you know you paid, or £10,000 if that's the total your pension statement shows. The calculator converts between them either way, so there's nothing to work out by hand.</p>
+        </div>
         <div class="claim-steps">
           <p class="claim-steps-label">How to actually get this money back</p>
           <ol>
