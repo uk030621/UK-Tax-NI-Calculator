@@ -12,7 +12,7 @@ const EXCLUSIONS: Exclusion[] = [
   {
     topic: "Business Asset Disposal Relief & Investors' Relief",
     whyExcluded:
-      "These give a reduced 10% Capital Gains Tax rate on qualifying business disposals, but eligibility depends on tracking ownership history, shareholding percentages, and lifetime limits across multiple tax years — not something a single-year calculator can safely determine.",
+      "Business Asset Disposal Relief gives a reduced Capital Gains Tax rate on qualifying business disposals (14% for disposals in 2025/26, 18% from 6 April 2026), and Investors' Relief is a similar relief for outside investors in unlisted companies. Eligibility depends on tracking ownership history, shareholding percentages, and lifetime limits across multiple tax years — not something a single-year calculator can safely determine.",
     advice:
       "Speak to a Chartered Accountant (search the ICAEW's public directory) or a Chartered Tax Adviser (Chartered Institute of Taxation) before relying on either relief — the eligibility rules are detailed and the lifetime limit is easy to miscalculate without your full disposal history.",
   },
@@ -38,23 +38,16 @@ const EXCLUSIONS: Exclusion[] = [
       "A Chartered Tax Adviser with international experience can confirm what the relevant double-taxation treaty allows — the mechanism varies significantly by country.",
   },
   {
-    topic: "Non-UK residence, domicile, and the Statutory Residence Test",
+    topic: "Non-UK residence, the Statutory Residence Test, and the foreign income and gains regime",
     whyExcluded:
-      "Every calculation in this app assumes you're a straightforward UK tax resident. Whether that's actually true — for anyone who splits time between countries, has moved to or from the UK recently, or has non-domiciled status — is itself a genuinely complex legal determination (the Statutory Residence Test), not something any calculator at this scale should attempt.",
+      "Every calculation in this app assumes you're a straightforward UK tax resident. Whether that's actually true — for anyone who splits time between countries, has moved to or from the UK recently, or has used the old remittance basis (abolished from 6 April 2025 and replaced by a residence-based, four-year foreign income and gains regime) — is itself a genuinely complex legal determination (the Statutory Residence Test), not something any calculator at this scale should attempt.",
     advice:
       "If your residence status isn't straightforward, this is worth resolving with a Chartered Tax Adviser before using this calculator at all — it changes which UK taxes apply to you in the first place, not just the numbers within them.",
   },
   {
-    topic: "Rent-a-Room Relief",
-    whyExcluded:
-      "Letting a furnished room in your own home has its own £7,500 tax-free allowance (£3,750 if you share the income with someone else), separate from and not combinable with the £1,000 property allowance this app already models for ordinary rental income.",
-    advice:
-      "If this applies to you, GOV.UK's own guidance (search \"rent a room scheme\") is usually enough to self-assess correctly — it's one of the simpler reliefs on this list.",
-  },
-  {
     topic: "Capital allowances for self-employed equipment & vehicles",
     whyExcluded:
-      "For most small traders, the £1,000,000 Annual Investment Allowance means equipment purchases already get 100% relief in the year of purchase — which behaves almost identically to the itemized business expenses this app already supports. The genuine gap is business vehicles (particularly cars), which use entirely different CO2-based rates rather than a simple deduction.",
+      "For most small traders, the £1,000,000 Annual Investment Allowance means equipment purchases already get 100% relief in the year of purchase — which behaves almost identically to the itemised business expenses this app already supports. The genuine gap is business vehicles (particularly cars), which use entirely different CO2-based rates rather than a simple deduction.",
     advice:
       "If you've bought a business vehicle, a Chartered Accountant can confirm the correct capital allowance rate — this one is easy to get wrong by assuming it works like an ordinary expense.",
   },

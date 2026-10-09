@@ -48,6 +48,11 @@ const class2_2026 = { smallProfitsThreshold: 7105, voluntaryWeeklyRate: 3.65 };
 
 const tradingAllowance = 1000; // same £1,000 pattern as the property allowance
 
+// Rent-a-Room Scheme — frozen at £7,500 since April 2016, unchanged for
+// both seeded years (confirmed not touched by the Spring or Autumn 2025
+// Budgets). Halved to £3,750 each when shared — handled in calculateTax.ts.
+const rentARoomThreshold = 7500;
+
 // High Income Child Benefit Charge — thresholds unchanged since the
 // April 2024 reform, stable across both seeded years.
 const hicbc = { thresholdStart: 60000, thresholdFull: 80000 };
@@ -132,6 +137,7 @@ export const taxYears: TaxYearRates[] = [
     incomeTaxBands: ukIncomeTaxBands,
     propertyAllowance: 1000,
     tradingAllowance,
+    rentARoomThreshold,
     mortgageInterestReliefRate: 0.2,
     savingsAllowance,
     savingsBands: savingsBandsUk,
@@ -157,6 +163,7 @@ export const taxYears: TaxYearRates[] = [
     incomeTaxBands: scotlandIncomeTaxBands2025,
     propertyAllowance: 1000,
     tradingAllowance,
+    rentARoomThreshold,
     mortgageInterestReliefRate: 0.2,
     savingsAllowance,
     savingsBands: savingsBandsUk,
@@ -183,6 +190,7 @@ export const taxYears: TaxYearRates[] = [
     incomeTaxBands: ukIncomeTaxBands,
     propertyAllowance: 1000,
     tradingAllowance,
+    rentARoomThreshold,
     mortgageInterestReliefRate: 0.2,
     savingsAllowance,
     savingsBands: savingsBandsUk,
@@ -208,6 +216,7 @@ export const taxYears: TaxYearRates[] = [
     incomeTaxBands: scotlandIncomeTaxBands2026,
     propertyAllowance: 1000,
     tradingAllowance,
+    rentARoomThreshold,
     mortgageInterestReliefRate: 0.2,
     savingsAllowance,
     savingsBands: savingsBandsUk,

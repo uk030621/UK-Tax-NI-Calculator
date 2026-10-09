@@ -43,6 +43,9 @@ export async function POST(request: NextRequest) {
     rentalLossBroughtForward,
     mortgageInterest,
     financeCostsBroughtForward,
+    rentARoomReceipts,
+    rentARoomExpenses,
+    rentARoomShared,
     selfEmploymentProfit,
     selfEmploymentExpenses,
     selfEmploymentLossBroughtForward,
@@ -73,6 +76,7 @@ export async function POST(request: NextRequest) {
     ["mainResidenceFullyExempt", mainResidenceFullyExempt],
     ["hasPostgraduateLoan", hasPostgraduateLoan],
     ["receivingMarriageAllowance", receivingMarriageAllowance],
+    ["rentARoomShared", rentARoomShared],
   ] as const) {
     if (value !== undefined && typeof value !== "boolean") {
       return NextResponse.json({ error: `${key} must be a boolean` }, { status: 400 });
@@ -94,6 +98,7 @@ export async function POST(request: NextRequest) {
     rentalLossBroughtForward,
     mortgageInterest,
     financeCostsBroughtForward,
+    rentARoomReceipts,
     selfEmploymentProfit,
     selfEmploymentLossBroughtForward,
     savingsInterest,
@@ -147,6 +152,9 @@ export async function POST(request: NextRequest) {
   );
   if (selfEmploymentExpensesError) return selfEmploymentExpensesError;
 
+  const rentARoomExpensesError = validateExpenseArray(rentARoomExpenses, "rentARoomExpenses");
+  if (rentARoomExpensesError) return rentARoomExpensesError;
+
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
@@ -166,6 +174,8 @@ export async function POST(request: NextRequest) {
       ...amounts,
       rentalExpenses,
       selfEmploymentExpenses,
+      rentARoomExpenses,
+      rentARoomShared,
       mainResidenceFullyExempt,
       studentLoanPlan,
       hasPostgraduateLoan,

@@ -16,6 +16,7 @@ interface Draft {
   scotlandBands: Band[];
   propertyAllowance: number;
   tradingAllowance: number;
+  rentARoomThreshold: number;
   mortgageInterestReliefRate: number;
   psaBasic: number;
   psaHigher: number;
@@ -89,6 +90,7 @@ const blankDraft: Draft = {
     { threshold: 50270, rate: 0.02 },
   ],
   tradingAllowance: 1000,
+  rentARoomThreshold: 7500,
   class4LowerProfitsLimit: 12570,
   class4UpperProfitsLimit: 50270,
   class4Bands: [
@@ -117,6 +119,7 @@ function draftFromDocs(taxYear: string, uk: TaxYearRates, scotland: TaxYearRates
     scotlandBands: scotland.incomeTaxBands,
     propertyAllowance: uk.propertyAllowance,
     tradingAllowance: uk.tradingAllowance,
+    rentARoomThreshold: uk.rentARoomThreshold ?? 7500,
     mortgageInterestReliefRate: uk.mortgageInterestReliefRate,
     psaBasic: uk.savingsAllowance.basicRate,
     psaHigher: uk.savingsAllowance.higherRate,
@@ -153,6 +156,7 @@ function draftToDocs(draft: Draft): { uk: TaxYearRates; scotland: TaxYearRates }
     personalAllowance: draft.personalAllowance,
     propertyAllowance: draft.propertyAllowance,
     tradingAllowance: draft.tradingAllowance,
+    rentARoomThreshold: draft.rentARoomThreshold,
     mortgageInterestReliefRate: draft.mortgageInterestReliefRate,
     savingsAllowance: {
       basicRate: draft.psaBasic,
@@ -329,6 +333,18 @@ export function AdminTaxYearForm() {
           label="Flat property allowance"
           value={draft.propertyAllowance}
           onChange={(v) => update("propertyAllowance", Number(v))}
+          prefix="£"
+        />
+      </Section>
+
+      <Section
+        title="Rent-a-Room Scheme"
+        subtitle="Letting a furnished room in the taxpayer's own home — halved to this amount each when shared, handled automatically"
+      >
+        <NumberField
+          label="Tax-free threshold (full amount, not the shared figure)"
+          value={draft.rentARoomThreshold}
+          onChange={(v) => update("rentARoomThreshold", Number(v))}
           prefix="£"
         />
       </Section>

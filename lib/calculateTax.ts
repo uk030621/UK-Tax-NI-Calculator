@@ -26,6 +26,18 @@ export interface TaxYearRates {
   tradingAllowance: number; // same £1,000 pattern, for self-employment profit
 
   /**
+   * Rent-a-Room Scheme (ITTOIA 2005 Part 7, HMRC Helpsheet HS223):
+   * letting a furnished room in the taxpayer's OWN home. Frozen at
+   * £7,500 since April 2016 — not index-linked, confirmed unchanged
+   * for both 2025/26 and 2026/27. Halved to £3,750 each when the
+   * receipts are shared with someone else (a partner, a joint owner).
+   * A genuinely separate relief from the £1,000 property allowance
+   * above — HMRC treats the two as not combinable, and this one only
+   * applies to the taxpayer's main home, never a separate let property.
+   */
+  rentARoomThreshold: number;
+
+  /**
    * Section 24: landlords don't deduct mortgage interest from rental
    * profit at all — instead they get a flat-rate tax credit against
    * their final income tax bill, at this rate regardless of their
@@ -129,6 +141,20 @@ export interface MultiIncomeInput {
   rentalLossBroughtForward?: number; // per PIM4210: relieved against this year's rental profit first
   mortgageInterest?: number;
   financeCostsBroughtForward?: number; // per PIM4460: added to this year's interest before the 3-way cap
+  /**
+   * Rent-a-Room Scheme: gross receipts from letting a furnished room in
+   * the taxpayer's OWN home — a different, legally separate income
+   * source from rentalIncome above (a separate let property). Receipts
+   * at or below the threshold are fully exempt automatically; above it,
+   * the taxpayer gets the better of (receipts − threshold) or
+   * (receipts − actual itemised expenses), never both at once. See the
+   * calculation comments for why a loss from this source isn't modelled.
+   */
+  rentARoomReceipts?: number;
+  rentARoomExpenses?: RentalExpenseItem[];
+  /** True if the receipts are shared with someone else (a partner, a joint owner) — halves the threshold to £3,750 each. */
+  rentARoomShared?: boolean;
+
   selfEmploymentProfit?: number;
   selfEmploymentExpenses?: RentalExpenseItem[];
   selfEmploymentLossBroughtForward?: number; // per ITA07/s83: relieved against this year's trading profit first
@@ -209,6 +235,13 @@ export interface CalculationResult {
     rentalLossBroughtForward: number;
     rentalLossReliefApplied: number; // brought-forward loss actually used against this year's profit
     rentalLossCarriedForward: number; // unused loss (brought-forward + any new loss) to enter next year
+    rentARoomGross: number;
+    rentARoomThresholdApplied: number; // £7,500, or £3,750 if shared
+    rentARoomExpensesTotal: number;
+    rentARoomDeductionMethod: "exempt" | "threshold" | "expenses" | "none";
+    rentARoomDeductionApplied: number;
+    rentARoomShared: boolean;
+    rentARoomTaxableAmount: number;
     selfEmploymentGross: number;
     tradingAllowanceApplied: number;
     selfEmploymentExpensesTotal: number;
@@ -448,9 +481,9 @@ export function calculateMultiIncomeTax(
   const capitalGainsBands = extendBands(rates.capitalGains.bands, bandExtension);
 
   // --- Rental: use whichever is worth more, the flat £1,000 property
-  // allowance or the sum of itemized allowable expenses (HMRC lets
+  // allowance or the sum of itemised allowable expenses (HMRC lets
   // landlords choose either, never both). Mortgage interest is
-  // deliberately excluded from itemized expenses — since 2020/21 it's
+  // deliberately excluded from itemised expenses — since 2020/21 it's
   // relieved as a 20% tax credit against the final bill, not a
   // deduction from rental profit (see the finance-cost section below).
   const rentalExpensesTotal = (input.rentalExpenses ?? []).reduce(
@@ -459,7 +492,7 @@ export function calculateMultiIncomeTax(
   );
   const useItemizedExpenses = rentalExpensesTotal > rates.propertyAllowance;
   // The £1,000 allowance can never exceed income or create a loss, but
-  // itemized expenses genuinely can — that's precisely what generates a
+  // itemised expenses genuinely can — that's precisely what generates a
   // rental loss under PIM4210, so only the allowance route is capped here.
   const rentalDeductionApplied = useItemizedExpenses
     ? rentalExpensesTotal
@@ -495,7 +528,56 @@ export function calculateMultiIncomeTax(
     rentalLossCarriedForward = rentalLossBroughtForward + Math.abs(rentalNetBeforeLossRelief);
   }
 
-  // --- Self-employment: same allowance-vs-itemized-expenses pattern as
+  // --- Rent-a-Room Scheme (HS223): letting a furnished room in the
+  // taxpayer's OWN home — a separate relief from the property allowance
+  // above, not combinable with it (HMRC's own rule), and only available
+  // for the taxpayer's main residence, never a separate let property.
+  // Receipts at or below the threshold are automatically exempt in
+  // full. Above it, the taxpayer gets whichever is worth more: the
+  // threshold itself, or actual itemised expenses — mathematically the
+  // same "pick whichever deduction is bigger" shape as the property
+  // allowance comparison above, since a deduction capped at receipts
+  // behaves identically to a hard exemption below the threshold.
+  //
+  // Deliberately NOT modelled: a Rent-a-Room "loss" from itemised
+  // expenses exceeding receipts. In practice HMRC requires electing OUT
+  // of the scheme entirely to claim a loss under ordinary property
+  // rules — formally incompatible with claiming the scheme's relief in
+  // the same breath — so taxable profit here is simply floored at £0
+  // rather than generating a carry-forward figure.
+  const rentARoomReceipts = Math.max(0, input.rentARoomReceipts ?? 0);
+  const rentARoomShared = Boolean(input.rentARoomShared);
+  // Tax-year documents saved before Rent-a-Room was added have no
+  // threshold field. Fall back to the £7,500 figure (frozen since 2016)
+  // so they keep working until the rates are re-seeded or re-saved.
+  const rentARoomFullThreshold =
+    typeof rates.rentARoomThreshold === "number" && rates.rentARoomThreshold >= 0
+      ? rates.rentARoomThreshold
+      : 7500;
+  const rentARoomThresholdApplied = rentARoomShared
+    ? rentARoomFullThreshold / 2
+    : rentARoomFullThreshold;
+  const rentARoomExpensesTotal = (input.rentARoomExpenses ?? []).reduce(
+    (sum, item) => sum + Math.max(0, item.amount || 0),
+    0
+  );
+  const useItemizedRentARoomExpenses =
+    rentARoomReceipts > rentARoomThresholdApplied &&
+    rentARoomExpensesTotal > rentARoomThresholdApplied;
+  const rentARoomDeductionApplied = useItemizedRentARoomExpenses
+    ? rentARoomExpensesTotal
+    : Math.min(rentARoomReceipts, rentARoomThresholdApplied);
+  const rentARoomTaxableAmount = Math.max(0, rentARoomReceipts - rentARoomDeductionApplied);
+  const rentARoomDeductionMethod: "exempt" | "threshold" | "expenses" | "none" =
+    rentARoomReceipts === 0
+      ? "none"
+      : rentARoomReceipts <= rentARoomThresholdApplied
+      ? "exempt"
+      : useItemizedRentARoomExpenses
+      ? "expenses"
+      : "threshold";
+
+  // --- Self-employment: same allowance-vs-itemised-expenses pattern as
   // rental, but with the £1,000 trading allowance instead of the
   // property allowance, and no mortgage-interest-style special case.
   const selfEmploymentExpensesTotal = (input.selfEmploymentExpenses ?? []).reduce(
@@ -505,7 +587,7 @@ export function calculateMultiIncomeTax(
   const useItemizedSelfEmploymentExpenses =
     selfEmploymentExpensesTotal > rates.tradingAllowance;
   // Same fix as rental: the £1,000 trading allowance can't exceed income
-  // or create a loss, but itemized expenses genuinely can — that's what
+  // or create a loss, but itemised expenses genuinely can — that's what
   // generates a trading loss under ITA 2007 s83.
   const selfEmploymentDeductionApplied = useItemizedSelfEmploymentExpenses
     ? selfEmploymentExpensesTotal
@@ -549,7 +631,11 @@ export function calculateMultiIncomeTax(
   }
 
   const nonSavingsIncome =
-    employmentIncome + pensionIncome + taxableRental + taxableSelfEmployment;
+    employmentIncome +
+    pensionIncome +
+    taxableRental +
+    rentARoomTaxableAmount +
+    taxableSelfEmployment;
 
   // --- Marriage Allowance: a flat amount added to the RECIPIENT's own
   // Personal Allowance. This app only ever models one taxpayer, so it
@@ -822,6 +908,7 @@ export function calculateMultiIncomeTax(
     employmentIncome +
     pensionIncome +
     rentalIncomeGross +
+    rentARoomReceipts +
     selfEmploymentProfitGross +
     savingsInterest +
     dividendIncome;
@@ -856,6 +943,13 @@ export function calculateMultiIncomeTax(
       rentalLossBroughtForward,
       rentalLossReliefApplied,
       rentalLossCarriedForward,
+      rentARoomGross: rentARoomReceipts,
+      rentARoomThresholdApplied,
+      rentARoomExpensesTotal,
+      rentARoomDeductionMethod,
+      rentARoomDeductionApplied,
+      rentARoomShared,
+      rentARoomTaxableAmount,
       selfEmploymentGross: selfEmploymentProfitGross,
       tradingAllowanceApplied:
         selfEmploymentDeductionMethod === "allowance" ? selfEmploymentDeductionApplied : 0,
@@ -866,7 +960,8 @@ export function calculateMultiIncomeTax(
       selfEmploymentLossReliefApplied,
       selfEmploymentLossCarriedForward,
       allowanceUsed: paForNonSavings,
-      zeroRateAmount: rentalDeductionApplied + selfEmploymentDeductionApplied,
+      zeroRateAmount:
+        rentalDeductionApplied + rentARoomDeductionApplied + selfEmploymentDeductionApplied,
       taxableAmount: taxableNonSavings,
       tax: nonSavingsResult.tax,
       bands: nonSavingsResult.breakdown,

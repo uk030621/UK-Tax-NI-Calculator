@@ -26,6 +26,14 @@ const RENTAL_EXPENSE_CATEGORIES = [
   "Other allowable expenses",
 ] as const;
 
+const RENT_A_ROOM_EXPENSE_CATEGORIES = [
+  "Share of utility bills (gas, electricity, water, broadband)",
+  "Cleaning / laundry",
+  "Wear and tear / furnishings",
+  "Advertising for a lodger",
+  "Other allowable expenses",
+] as const;
+
 const BUSINESS_EXPENSE_CATEGORIES = [
   "Cost of goods / materials",
   "Office costs (stationery, phone, software)",
@@ -46,6 +54,7 @@ interface IncomeFields {
   rentalLossBroughtForward: string;
   mortgageInterest: string;
   financeCostsBroughtForward: string;
+  rentARoomReceipts: string;
   selfEmploymentProfit: string;
   selfEmploymentLossBroughtForward: string;
   savingsInterest: string;
@@ -67,6 +76,7 @@ const emptyIncome: IncomeFields = {
   rentalLossBroughtForward: "",
   mortgageInterest: "",
   financeCostsBroughtForward: "",
+  rentARoomReceipts: "",
   selfEmploymentProfit: "",
   selfEmploymentLossBroughtForward: "",
   savingsInterest: "",
@@ -85,6 +95,10 @@ const emptyExpenses: Record<string, string> = Object.fromEntries(
   RENTAL_EXPENSE_CATEGORIES.map((c) => [c, ""])
 );
 
+const emptyRentARoomExpenses: Record<string, string> = Object.fromEntries(
+  RENT_A_ROOM_EXPENSE_CATEGORIES.map((c) => [c, ""])
+);
+
 const emptyBusinessExpenses: Record<string, string> = Object.fromEntries(
   BUSINESS_EXPENSE_CATEGORIES.map((c) => [c, ""])
 );
@@ -98,6 +112,8 @@ interface HistoryEntry {
     pensionGross?: number;
     rentalGross?: number;
     rentalLossBroughtForward?: number;
+    rentARoomGross?: number;
+    rentARoomShared?: boolean;
     selfEmploymentGross?: number;
     selfEmploymentLossBroughtForward?: number;
   };
@@ -145,6 +161,11 @@ export function TaxCalculatorForm() {
   const [showOtherIncome, setShowOtherIncome] = useState(false);
   const [showExpenses, setShowExpenses] = useState(false);
   const [rentalExpenses, setRentalExpenses] = useState<Record<string, string>>(emptyExpenses);
+  const [showRentARoomExpenses, setShowRentARoomExpenses] = useState(false);
+  const [rentARoomExpenses, setRentARoomExpenses] = useState<Record<string, string>>(
+    emptyRentARoomExpenses
+  );
+  const [rentARoomShared, setRentARoomShared] = useState(false);
   const [showBusinessExpenses, setShowBusinessExpenses] = useState(false);
   const [businessExpenses, setBusinessExpenses] = useState<Record<string, string>>(
     emptyBusinessExpenses
@@ -214,6 +235,7 @@ export function TaxCalculatorForm() {
       rentalLossBroughtForward: asEdit && entry.nonSavings?.rentalLossBroughtForward ? String(entry.nonSavings.rentalLossBroughtForward) : "",
       mortgageInterest: entry.mortgageInterestRelief?.interestPaid ? String(entry.mortgageInterestRelief.interestPaid) : "",
       financeCostsBroughtForward: asEdit && entry.mortgageInterestRelief?.financeCostsBroughtForward ? String(entry.mortgageInterestRelief.financeCostsBroughtForward) : "",
+      rentARoomReceipts: entry.nonSavings?.rentARoomGross ? String(entry.nonSavings.rentARoomGross) : "",
       selfEmploymentProfit: entry.nonSavings?.selfEmploymentGross ? String(entry.nonSavings.selfEmploymentGross) : "",
       selfEmploymentLossBroughtForward: asEdit && entry.nonSavings?.selfEmploymentLossBroughtForward ? String(entry.nonSavings.selfEmploymentLossBroughtForward) : "",
       savingsInterest: entry.savings?.gross ? String(entry.savings.gross) : "",
@@ -228,6 +250,7 @@ export function TaxCalculatorForm() {
       childBenefitReceived: entry.hicbc?.childBenefitReceived ? String(entry.hicbc.childBenefitReceived) : "",
     });
     setPensionEntryMode("net"); // stored figures are always net — see declaration above
+    setRentARoomShared(Boolean(entry.nonSavings?.rentARoomShared));
     setMainResidenceFullyExempt(Boolean(entry.capitalGainsTax?.mainResidenceExempt));
     setStudentLoanPlan(entry.studentLoan?.plan ?? "none");
     setHasPostgraduateLoan(Boolean(entry.studentLoan?.hasPostgraduateLoan));
@@ -237,6 +260,7 @@ export function TaxCalculatorForm() {
     if (
       entry.nonSavings?.pensionGross ||
       entry.nonSavings?.rentalGross ||
+      entry.nonSavings?.rentARoomGross ||
       entry.nonSavings?.selfEmploymentGross ||
       entry.savings?.gross ||
       entry.dividends?.gross ||
@@ -248,9 +272,10 @@ export function TaxCalculatorForm() {
     ) {
       setShowOtherIncome(true);
     }
-    // Itemized expense category breakdowns aren't stored, only totals —
+    // Itemised expense category breakdowns aren't stored, only totals —
     // same limitation the mount-prefill already had, not new to editing.
     setRentalExpenses(emptyExpenses);
+    setRentARoomExpenses(emptyRentARoomExpenses);
     setBusinessExpenses(emptyBusinessExpenses);
     setResult(null);
     setSaved(false);
@@ -266,6 +291,8 @@ export function TaxCalculatorForm() {
     setIncome(emptyIncome);
     setPensionEntryMode("net");
     setRentalExpenses(emptyExpenses);
+    setRentARoomExpenses(emptyRentARoomExpenses);
+    setRentARoomShared(false);
     setBusinessExpenses(emptyBusinessExpenses);
     setMainResidenceFullyExempt(false);
     setStudentLoanPlan("none");
@@ -273,6 +300,7 @@ export function TaxCalculatorForm() {
     setReceivingMarriageAllowance(false);
     setShowOtherIncome(false);
     setShowExpenses(false);
+    setShowRentARoomExpenses(false);
     setShowBusinessExpenses(false);
     setError(null);
     setResult(null);
@@ -284,6 +312,8 @@ export function TaxCalculatorForm() {
   const formHasInput =
     Object.values(income).some((v) => v !== "") ||
     Object.values(rentalExpenses).some((v) => v !== "") ||
+    Object.values(rentARoomExpenses).some((v) => v !== "") ||
+    rentARoomShared ||
     Object.values(businessExpenses).some((v) => v !== "") ||
     mainResidenceFullyExempt ||
     studentLoanPlan !== "none" ||
@@ -324,11 +354,20 @@ export function TaxCalculatorForm() {
     setRentalExpenses((prev) => ({ ...prev, [category]: value }));
   }
 
+  function updateRentARoomExpense(category: string, value: string) {
+    setRentARoomExpenses((prev) => ({ ...prev, [category]: value }));
+  }
+
   function updateBusinessExpense(category: string, value: string) {
     setBusinessExpenses((prev) => ({ ...prev, [category]: value }));
   }
 
   const rentalExpensesTotal = Object.values(rentalExpenses).reduce(
+    (sum, v) => sum + (Number(v) || 0),
+    0
+  );
+
+  const rentARoomExpensesTotal = Object.values(rentARoomExpenses).reduce(
     (sum, v) => sum + (Number(v) || 0),
     0
   );
@@ -364,6 +403,11 @@ export function TaxCalculatorForm() {
       rentalLossBroughtForward: Number(income.rentalLossBroughtForward) || 0,
       mortgageInterest: Number(income.mortgageInterest) || 0,
       financeCostsBroughtForward: Number(income.financeCostsBroughtForward) || 0,
+      rentARoomReceipts: Number(income.rentARoomReceipts) || 0,
+      rentARoomExpenses: Object.entries(rentARoomExpenses)
+        .filter(([, v]) => Number(v) > 0)
+        .map(([category, v]) => ({ category, amount: Number(v) })),
+      rentARoomShared,
       selfEmploymentProfit: Number(income.selfEmploymentProfit) || 0,
       selfEmploymentLossBroughtForward: Number(income.selfEmploymentLossBroughtForward) || 0,
       selfEmploymentExpenses: Object.entries(businessExpenses)
@@ -580,7 +624,7 @@ export function TaxCalculatorForm() {
               onClick={() => setShowOtherIncome((v) => !v)}
               className="text-sm font-medium text-brand-600 hover:text-brand-700"
             >
-              {showOtherIncome ? "− Hide other income, reliefs & Child Benefit" : "+ Add pension, self-employment, rental, savings, dividends, gains, reliefs or Child Benefit"}
+              {showOtherIncome ? "− Hide other income, reliefs & Child Benefit" : "+ Add pension, self-employment, rental, rent-a-room, savings, dividends, gains, reliefs or Child Benefit"}
             </button>
           </div>
 
@@ -616,8 +660,8 @@ export function TaxCalculatorForm() {
                   className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-700"
                 >
                   {showExpenses
-                    ? "− Hide itemized expenses"
-                    : "+ Itemize allowable expenses (instead of the £1,000 allowance)"}
+                    ? "− Hide itemised expenses"
+                    : "+ Itemise allowable expenses (instead of the £1,000 allowance)"}
                 </button>
 
                 {showExpenses && (
@@ -641,7 +685,7 @@ export function TaxCalculatorForm() {
                       </div>
                     ))}
                     <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
-                      <span className="text-slate-500">Total itemized expenses</span>
+                      <span className="text-slate-500">Total itemised expenses</span>
                       <span className="font-semibold text-slate-800">
                         {GBP.format(rentalExpensesTotal)}
                       </span>
@@ -699,6 +743,95 @@ export function TaxCalculatorForm() {
               </div>
 
               <div className="border-t border-slate-200 pt-4">
+                <CategoryHeader label="Rent-a-Room" />
+                <MoneyField
+                  label="Rent-a-Room receipts (letting a furnished room in your own home)"
+                  value={income.rentARoomReceipts}
+                  onChange={(v) => updateField("rentARoomReceipts", v)}
+                  placeholder="e.g. 6,000"
+                />
+                <p className="mt-1.5 text-xs text-slate-400">
+                  A separate relief from Rental above — this is for a lodger
+                  in the home you actually live in, not a separate let
+                  property. Include everything the lodger pays: rent, plus
+                  any share of bills, meals, cleaning or laundry rolled into
+                  the figure. Up to £7,500 a year (2025/26 and 2026/27) is
+                  tax-free automatically — nothing else to enter unless
+                  you're over that.
+                </p>
+
+                <label className="mt-3 flex items-start gap-2 text-xs text-slate-500">
+                  <input
+                    type="checkbox"
+                    checked={rentARoomShared}
+                    onChange={(e) => setRentARoomShared(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                  />
+                  <span>
+                    I share this income with someone else (a partner or
+                    joint owner), so the threshold halves to £3,750 each.
+                    Enter only your own share of the receipts above.
+                  </span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => setShowRentARoomExpenses((v) => !v)}
+                  className="mt-3 text-xs font-medium text-brand-600 hover:text-brand-700"
+                >
+                  {showRentARoomExpenses
+                    ? "− Hide itemised expenses"
+                    : "+ Itemise actual expenses (only matters if you're over the threshold)"}
+                </button>
+
+                {showRentARoomExpenses && (
+                  <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                    {RENT_A_ROOM_EXPENSE_CATEGORIES.map((category) => (
+                      <div key={category} className="flex items-center gap-2">
+                        <label className="flex-1 text-xs text-slate-600">{category}</label>
+                        <div className="relative w-28">
+                          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                            £
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={rentARoomExpenses[category]}
+                            onChange={(e) => updateRentARoomExpense(category, e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 py-1.5 pl-5 pr-2 text-sm outline-none focus:border-brand-500"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
+                      <span className="text-slate-500">Total itemised expenses</span>
+                      <span className="font-semibold text-slate-800">
+                        {GBP.format(rentARoomExpensesTotal)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Only matters once your receipts go over the threshold
+                      — below it, you're exempt regardless of expenses.
+                      Above it, the calculator automatically uses whichever
+                      is worth more: this total, or the threshold itself.
+                      HMRC uses your actual expenses by default, so there is
+                      nothing to tell them. To use the threshold instead, you
+                      tell HMRC within a year of the 31 January Self
+                      Assessment deadline for that tax year.
+                    </p>
+                  </div>
+                )}
+
+                <p className="mt-3 text-xs text-slate-400">
+                  Not modelled: a loss from this source (HMRC requires
+                  electing out of the scheme entirely to claim one — speak
+                  to an accountant if your expenses genuinely exceed your
+                  receipts), and mortgage interest relief on this income.
+                </p>
+              </div>
+
+              <div className="border-t border-slate-200 pt-4">
                 <CategoryHeader label="Self-employment" />
                 <MoneyField
                   label="Self-employment income (before expenses/allowance)"
@@ -712,8 +845,8 @@ export function TaxCalculatorForm() {
                   className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-700"
                 >
                   {showBusinessExpenses
-                    ? "− Hide itemized business expenses"
-                    : "+ Itemize business expenses (instead of the £1,000 trading allowance)"}
+                    ? "− Hide itemised business expenses"
+                    : "+ Itemise business expenses (instead of the £1,000 trading allowance)"}
                 </button>
 
                 {showBusinessExpenses && (
@@ -737,7 +870,7 @@ export function TaxCalculatorForm() {
                       </div>
                     ))}
                     <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
-                      <span className="text-slate-500">Total itemized business expenses</span>
+                      <span className="text-slate-500">Total itemised business expenses</span>
                       <span className="font-semibold text-slate-800">
                         {GBP.format(businessExpensesTotal)}
                       </span>
@@ -1215,11 +1348,17 @@ function ResultCard({ result }: { result: CalculationResult }) {
       <div className="mt-6 space-y-4 border-t border-slate-100 pt-5">
         {result.nonSavings.gross > 0 && (
           <IncomeSection
-            title="Employment, pension, rental & self-employment"
+            title="Employment, pension, rental, rent-a-room & self-employment"
             subtitle={rentalDeductionSubtitle(result.nonSavings)}
             bands={result.nonSavings.bands}
             tax={result.nonSavings.tax}
           />
+        )}
+
+        {result.nonSavings.rentARoomGross > 0 && (
+          <p className="-mt-2 text-xs text-slate-400">
+            {rentARoomSubtitle(result.nonSavings)}
+          </p>
         )}
 
         {result.nonSavings.selfEmploymentGross > 0 && selfEmploymentDeductionSubtitle(result.nonSavings) && (
@@ -1452,7 +1591,7 @@ function ResultCard({ result }: { result: CalculationResult }) {
 
 function rentalDeductionSubtitle(nonSavings: CalculationResult["nonSavings"]): string | undefined {
   if (nonSavings.rentalDeductionMethod === "expenses") {
-    return `£${nonSavings.rentalDeductionApplied.toLocaleString()} itemized expenses deducted (beat the £1,000 allowance)`;
+    return `£${nonSavings.rentalDeductionApplied.toLocaleString()} itemised expenses deducted (beat the £1,000 allowance)`;
   }
   if (nonSavings.rentalDeductionMethod === "allowance") {
     return `£${nonSavings.rentalDeductionApplied.toLocaleString()} property allowance applied`;
@@ -1460,11 +1599,27 @@ function rentalDeductionSubtitle(nonSavings: CalculationResult["nonSavings"]): s
   return undefined;
 }
 
+function rentARoomSubtitle(nonSavings: CalculationResult["nonSavings"]): string {
+  const threshold = nonSavings.rentARoomShared
+    ? `£${nonSavings.rentARoomThresholdApplied.toLocaleString()} (your half of the shared £7,500 limit)`
+    : `£${nonSavings.rentARoomThresholdApplied.toLocaleString()}`;
+  if (nonSavings.rentARoomDeductionMethod === "exempt") {
+    return `Rent-a-Room: fully tax-free — £${nonSavings.rentARoomGross.toLocaleString()} is within the ${threshold} threshold, nothing to report to HMRC`;
+  }
+  if (nonSavings.rentARoomDeductionMethod === "expenses") {
+    return `Rent-a-Room: £${nonSavings.rentARoomDeductionApplied.toLocaleString()} itemised expenses deducted (beat the ${threshold} threshold) — HMRC uses your actual expenses by default, so there is nothing to tell them unless you previously chose the threshold method`;
+  }
+  const taxable = `£${nonSavings.rentARoomTaxableAmount.toLocaleString()} of the £${nonSavings.rentARoomGross.toLocaleString()} receipts is taxable`;
+  return nonSavings.rentARoomExpensesTotal > 0
+    ? `Rent-a-Room: the ${threshold} limit was deducted because it beat your itemised expenses — ${taxable}. To use the limit method, tell HMRC within a year of the 31 January Self Assessment deadline for that tax year`
+    : `Rent-a-Room: the ${threshold} limit was deducted — ${taxable}. To use the limit method, tell HMRC within a year of the 31 January Self Assessment deadline for that tax year`;
+}
+
 function selfEmploymentDeductionSubtitle(
   nonSavings: CalculationResult["nonSavings"]
 ): string | undefined {
   if (nonSavings.selfEmploymentDeductionMethod === "expenses") {
-    return `Self-employment: £${nonSavings.selfEmploymentDeductionApplied.toLocaleString()} itemized business expenses deducted (beat the £1,000 trading allowance)`;
+    return `Self-employment: £${nonSavings.selfEmploymentDeductionApplied.toLocaleString()} itemised business expenses deducted (beat the £1,000 trading allowance)`;
   }
   if (nonSavings.selfEmploymentDeductionMethod === "allowance") {
     return `Self-employment: £${nonSavings.selfEmploymentDeductionApplied.toLocaleString()} trading allowance applied`;

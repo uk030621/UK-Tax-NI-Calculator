@@ -10,8 +10,8 @@ interface LandingContentProps {
 
 const STACK_STEPS = [
   {
-    title: "Employment, pension, rental & self-employment",
-    body: "Taxed first, using your Personal Allowance and the correct bands for your region — including Scotland's own rates where they genuinely apply.",
+    title: "Employment, pension, rental, rent-a-room & self-employment",
+    body: "Taxed first, using your Personal Allowance and the correct bands for your region — including Scotland's own rates where they genuinely apply. Letting a spare room in your own home? Rent-a-Room Relief is applied for you, with the £7,500 limit (£3,750 if shared) and the choice between the limit and itemised expenses.",
   },
   {
     title: "Savings interest",
@@ -305,7 +305,7 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
             <li>Business Asset Disposal Relief and Investors&rsquo; Relief</li>
             <li>Partial Private Residence Relief</li>
             <li>Combined employment and self-employment NI caps</li>
-            <li>Non-UK residence and domicile status</li>
+            <li>Non-UK residence and the foreign income and gains regime</li>
           </ul>
         </div>
       </section>

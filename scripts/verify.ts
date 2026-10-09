@@ -184,6 +184,24 @@ function runChecks(rows: TaxYearRates[]) {
   expectNumber("Dividend tax identical in Scotland and rest of UK", mixedSc.dividends.tax, mixedUk.dividends.tax);
   expectNumber("CGT identical in Scotland and rest of UK", mixedSc.capitalGainsTax.tax, mixedUk.capitalGainsTax.tax);
 
+  section("Rent-a-Room Scheme — HS223 (frozen £7,500 / £3,750 threshold since 2016)");
+  const belowThreshold = run({ employmentIncome: 20000, rentARoomReceipts: 7000 });
+  expectNumber("Under the £7,500 threshold: fully exempt, taxable amount", belowThreshold.nonSavings.rentARoomTaxableAmount, 0);
+  expectNumber("Under the £7,500 threshold: income tax (salary only)", belowThreshold.totalIncomeTax, 1486);
+  const smallExpenses = run({ employmentIncome: 20000, rentARoomReceipts: 9000, rentARoomExpenses: [{ category: "Cleaning", amount: 500 }] }).nonSavings;
+  expectNumber("Over threshold, small expenses: threshold method wins — deduction applied", smallExpenses.rentARoomDeductionApplied, 7500);
+  expectNumber("Over threshold, small expenses: taxable amount", smallExpenses.rentARoomTaxableAmount, 1500);
+  const largeExpenses = run({ rentARoomReceipts: 12000, rentARoomExpenses: [{ category: "Bills", amount: 9000 }] }).nonSavings;
+  expectNumber("Over threshold, large expenses: expenses method wins — deduction applied", largeExpenses.rentARoomDeductionApplied, 9000);
+  expectNumber("Over threshold, large expenses: taxable amount", largeExpenses.rentARoomTaxableAmount, 3000);
+  const shared = run({ rentARoomReceipts: 5000, rentARoomShared: true }).nonSavings;
+  expectNumber("Shared: threshold halved to £3,750", shared.rentARoomThresholdApplied, 3750);
+  expectNumber("Shared: £5,000 receipts now exceeds the halved threshold — taxable amount", shared.rentARoomTaxableAmount, 1250);
+  const notShared = run({ rentARoomReceipts: 5000 }).nonSavings;
+  expectNumber("Not shared: same £5,000 stays under the full £7,500 threshold — exempt", notShared.rentARoomTaxableAmount, 0);
+  const noLoss = run({ rentARoomReceipts: 9000, rentARoomExpenses: [{ category: "Bills", amount: 11000 }] }).nonSavings;
+  expectNumber("Expenses exceeding receipts: floored at £0, no loss carried", noLoss.rentARoomTaxableAmount, 0);
+
   section("Self-employment Class 4 NI — LITRG (income entered = profit + £1,000 trading allowance)");
   expectNumber("Frank (£13,000 profit)", run({ selfEmploymentProfit: 14000 }).nationalInsuranceClass4.total, 25.8);
   expectNumber("Henriette (£55,000 profit)", run({ selfEmploymentProfit: 56000 }).nationalInsuranceClass4.total, 2356.6);
@@ -257,6 +275,7 @@ function runChecks(rows: TaxYearRates[]) {
     employmentIncome: 55000, pensionIncome: 8000,
     rentalIncome: 14000, rentalExpenses: [{ category: "Repairs", amount: 2500 }], rentalLossBroughtForward: 500,
     mortgageInterest: 5000, financeCostsBroughtForward: 700,
+    rentARoomReceipts: 9000, rentARoomExpenses: [{ category: "Cleaning", amount: 1200 }], rentARoomShared: false,
     selfEmploymentProfit: 12000, selfEmploymentExpenses: [{ category: "Travel", amount: 1800 }], selfEmploymentLossBroughtForward: 400,
     savingsInterest: 1200, dividendIncome: 4000, foreignTaxWithheldOnDividends: 600,
     capitalGains: 20000, capitalLossesThisYear: 1000, capitalLossesBroughtForward: 3000,

@@ -49,10 +49,10 @@ region.
 ### Simplifications (this isn't a substitute for professional advice)
 
 - Rental income can use either the flat £1,000 property allowance or a
-  user-entered itemized list of allowable expenses (letting agent fees,
+  user-entered itemised list of allowable expenses (letting agent fees,
   insurance, repairs, ground rent, etc.) — the calculator automatically
   applies whichever deducts more. **Mortgage interest is deliberately
-  excluded** from that itemized list: since the 2020/21 "Section 24"
+  excluded** from that itemised list: since the 2020/21 "Section 24"
   changes, mortgage interest is no longer deductible from rental
   profit at all. Instead, it's entered as its own field and modelled
   correctly — as a flat-rate tax credit (`mortgageInterestReliefRate`
@@ -62,7 +62,22 @@ region.
   allowance. This is the mechanism that actually costs higher-rate
   landlords more than basic-rate ones, since the credit rate doesn't
   scale with their marginal tax band.
-- Self-employment income follows the identical allowance-vs-itemized
+- **Rent-a-Room Scheme** (`rentARoomThreshold` in `tax_years`, £7,500,
+  frozen since April 2016 — halved to £3,750 each when shared) is a
+  genuinely separate income stream from ordinary Rental above, not a
+  variant of it: it only applies to a furnished room let in the
+  taxpayer's own home, and HMRC treats it as not combinable with the
+  £1,000 property allowance. Receipts at or below the threshold are
+  exempt automatically; above it, the calculator picks whichever is
+  worth more — the threshold itself, or itemised actual expenses —
+  the same "bigger deduction wins" comparison as ordinary rental, just
+  with no loss-carry-forward: HMRC requires electing out of the scheme
+  entirely to claim a loss, so taxable profit from this source is
+  simply floored at £0 rather than generating a figure to carry
+  forward. Mortgage interest relief isn't modelled for it either, for
+  the same reason it isn't a close enough fit to the Section 24
+  mechanism above.
+- Self-employment income follows the identical allowance-vs-itemised
   pattern, using the £1,000 trading allowance instead of the property
   allowance. The **Class 1 + Class 4 "annual maximum" interaction is
   not modelled**: HMRC caps combined NI for anyone with both
@@ -166,7 +181,7 @@ region.
   shown on the main page) explicitly lists every deliberate gap —
   Business Asset Disposal Relief, partial Private Residence Relief,
   the Class 1+4 NI cap, foreign tax credit on gains, non-UK residence
-  status, Rent-a-Room Relief, capital allowances for vehicles, Pension
+  status, capital allowances for vehicles, Pension
   Annual Allowance tapering, the Marriage Allowance transferor gap
   above, VAT/IHT/SDLT, and the manual-only carry-forward design — each
   with a plain-English reason and concrete advice on where to get
@@ -262,7 +277,7 @@ data still produces the right answers.
 
 ## Verifying the calculations
 
-`npm run verify` runs the calculation engine through about 60 checks —
+`npm run verify` runs the calculation engine through about 70 checks —
 mostly published worked examples (HMRC, GOV.UK, gov.scot, LITRG), plus a
 handful of constructed cases where no official example exists; the
 validation guide lists the source for each and marks which is which. It
