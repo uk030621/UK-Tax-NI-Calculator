@@ -30,8 +30,7 @@ const STACK_STEPS = [
 const CHECKED_ITEMS = [
   <>
     <strong>Mortgage interest relief</strong> calculated as the 20% credit
-    it became in 2020 — not the old-style deduction most tools still
-    assume.
+    it became in 2020.
   </>,
   <>
     <strong>Scotland&rsquo;s income tax bands</strong>, applied only where
@@ -79,23 +78,24 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-16">
       {/* Worked example */}
-      {/* Why free calculators fall short */}
+      {/* Why a multi-income tax year is harder */}
       <section className="mt-14">
         <h2 className="font-serif text-2xl text-slate-900">
-          Most are built for one income type, then stretched
+          Built for a tax year with more than one thing in it
         </h2>
         <div className="mt-5 grid gap-6 sm:grid-cols-2">
           <p className="text-sm leading-relaxed text-slate-500">
-            A free calculator usually gets your <strong className="text-slate-700">salary</strong> right.
-            Add rental income and it often assumes your mortgage interest
-            is still a straight deduction — it hasn&rsquo;t worked that way
-            since 2020. Add Scottish tax bands and they&rsquo;re sometimes
-            applied to your savings and dividends too, which is simply
-            wrong.
+            Each kind of income is taxed differently. Mortgage interest on
+            a rental property is a{" "}
+            <strong className="text-slate-700">20% tax credit</strong>, not
+            a deduction, and has been since 2020. Scottish income tax bands
+            apply to salary, pension, rental and self-employment income,
+            but not to savings, dividends or gains. And the order matters:
+            each type of income sits on top of the one before it.
           </p>
           <p className="text-sm leading-relaxed text-slate-600">
-            This calculator was built the other way round: for someone
-            whose tax year genuinely involves more than one thing, with
+            This calculator is built for someone whose tax year involves
+            more than one of these, with
             each income type calculated in the order HMRC&rsquo;s own rules
             require — so the figure you get back reflects how your whole
             year actually works, not one slice of it.
@@ -131,10 +131,12 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
           Verified against official worked examples
         </h2>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-500">
-          Every calculation here has been checked against a published
-          example from HM Revenue &amp; Customs, the Low Incomes Tax Reform
-          Group (a respected UK tax charity), or the Scottish
-          Government&rsquo;s own rate tables.
+          The main calculations here are checked against published
+          examples from HM Revenue &amp; Customs, the Low Incomes Tax Reform
+          Group (a UK tax charity), or the Scottish Government&rsquo;s own
+          rate tables. Where there is no published example, such as
+          Rent-a-Room Relief, the test cases are built from the published
+          rule and labelled that way.
         </p>
         <p className="mt-2 text-xs text-slate-400">
           Rates and figures below are for the <strong>2025&ndash;26 and

@@ -67,8 +67,9 @@ export default async function Home({
             UK Tax &amp; NI Calculator
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Most calculators handle your salary. This one handles your
-            actual life — sign in with Google to get started.
+            Salary, pension, rental income, a let room, self-employment,
+            savings, dividends and capital gains, taxed together in the
+            order HMRC applies them. Sign in with Google to get started.
           </p>
 
           {!signedIn && (
