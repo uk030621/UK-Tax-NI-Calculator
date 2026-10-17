@@ -112,12 +112,18 @@ interface HistoryEntry {
     pensionGross?: number;
     rentalGross?: number;
     rentalLossBroughtForward?: number;
+    rentalLossCarriedForward?: number;
     rentARoomGross?: number;
     rentARoomShared?: boolean;
     selfEmploymentGross?: number;
     selfEmploymentLossBroughtForward?: number;
+    selfEmploymentLossCarriedForward?: number;
   };
-  mortgageInterestRelief?: { interestPaid?: number; financeCostsBroughtForward?: number };
+  mortgageInterestRelief?: {
+    interestPaid?: number;
+    financeCostsBroughtForward?: number;
+    financeCostsCarriedForward?: number;
+  };
   savings?: { gross?: number };
   dividends?: { gross?: number; foreignTaxWithheld?: number };
   capitalGainsTax?: {
@@ -127,6 +133,7 @@ interface HistoryEntry {
     mainResidenceExempt?: boolean;
     lossesThisYear?: number;
     broughtForwardLossAvailable?: number;
+    lossesCarriedForward?: number;
   };
   reliefAtSource?: {
     personalPensionContributionsNet?: number;
@@ -137,10 +144,44 @@ interface HistoryEntry {
     plan?: "none" | "plan1" | "plan2" | "plan4" | "plan5";
     hasPostgraduateLoan?: boolean;
   };
-  marriageAllowance?: { requested?: boolean };
+  marriageAllowance?: { requested?: boolean; giving?: boolean };
   netIncome?: number;
   taxYear?: string;
   region?: Region;
+}
+
+/** "2026-27" -> "2025-26". Returns null if the label isn't in that format. */
+function previousTaxYear(label: string): string | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(label);
+  if (!match) return null;
+  const start = Number(match[1]) - 1;
+  return `${start}-${String((start + 1) % 100).padStart(2, "0")}`;
+}
+
+interface CarryForwardFigures {
+  rentalLoss: number;
+  financeCosts: number;
+  selfEmploymentLoss: number;
+  capitalLosses: number;
+}
+
+/** The "carry forward to next year" figures a saved calculation recorded. */
+function carryForwardFigures(entry: HistoryEntry): CarryForwardFigures {
+  return {
+    rentalLoss: entry.nonSavings?.rentalLossCarriedForward ?? 0,
+    financeCosts: entry.mortgageInterestRelief?.financeCostsCarriedForward ?? 0,
+    selfEmploymentLoss: entry.nonSavings?.selfEmploymentLossCarriedForward ?? 0,
+    capitalLosses: entry.capitalGainsTax?.lossesCarriedForward ?? 0,
+  };
+}
+
+function hasCarryForward(figures: CarryForwardFigures): boolean {
+  return Object.values(figures).some((v) => v > 0);
+}
+
+function savedDateLabel(entry: HistoryEntry): string {
+  const when = entry.updatedAt ?? entry.createdAt;
+  return when ? new Date(when).toLocaleDateString("en-GB") : "an earlier date";
 }
 
 export function TaxCalculatorForm() {
@@ -182,6 +223,76 @@ export function TaxCalculatorForm() {
   const [studentLoanPlan, setStudentLoanPlan] = useState<"none" | "plan1" | "plan2" | "plan4" | "plan5">("none");
   const [hasPostgraduateLoan, setHasPostgraduateLoan] = useState(false);
   const [receivingMarriageAllowance, setReceivingMarriageAllowance] = useState(false);
+  const [givingMarriageAllowance, setGivingMarriageAllowance] = useState(false);
+  // Carry-forward offer: which saved calculation the user picked, whether
+  // they've applied it (we then show where the figures came from, with an
+  // Undo), and whether they've dismissed the offer for this tax year.
+  const [carryForwardSourceId, setCarryForwardSourceId] = useState<string | null>(null);
+  const [carryForwardAppliedFrom, setCarryForwardAppliedFrom] = useState<string | null>(null);
+  const [carryForwardDismissed, setCarryForwardDismissed] = useState(false);
+
+  // Saved calculations for the tax year immediately before the one being
+  // calculated that recorded something to carry forward, newest first.
+  const previousYearLabel = previousTaxYear(taxYear);
+  const carryForwardCandidates = previousYearLabel
+    ? historyList
+        .filter((e) => e.taxYear === previousYearLabel && hasCarryForward(carryForwardFigures(e)))
+        .sort((a, b) =>
+          (b.updatedAt ?? b.createdAt ?? "").localeCompare(a.updatedAt ?? a.createdAt ?? "")
+        )
+    : [];
+  const carryForwardSource =
+    carryForwardCandidates.find((e) => e._id === carryForwardSourceId) ??
+    carryForwardCandidates[0] ??
+    null;
+
+  // A new tax year means a new offer: forget any earlier choice or dismissal.
+  // If figures had been filled in from last year's calculation, clear them
+  // too, so they can't stay behind under a different tax year unnoticed.
+  useEffect(() => {
+    if (carryForwardAppliedFrom) {
+      setIncome((prev) => ({
+        ...prev,
+        rentalLossBroughtForward: "",
+        financeCostsBroughtForward: "",
+        selfEmploymentLossBroughtForward: "",
+        capitalLossesBroughtForward: "",
+      }));
+    }
+    setCarryForwardSourceId(null);
+    setCarryForwardAppliedFrom(null);
+    setCarryForwardDismissed(false);
+  }, [taxYear]);
+
+  function applyCarryForward() {
+    if (!carryForwardSource) return;
+    const f = carryForwardFigures(carryForwardSource);
+    const asField = (n: number) => (n > 0 ? String(n) : "");
+    setIncome((prev) => ({
+      ...prev,
+      rentalLossBroughtForward: asField(f.rentalLoss),
+      financeCostsBroughtForward: asField(f.financeCosts),
+      selfEmploymentLossBroughtForward: asField(f.selfEmploymentLoss),
+      capitalLossesBroughtForward: asField(f.capitalLosses),
+    }));
+    setShowOtherIncome(true);
+    setCarryForwardAppliedFrom(savedDateLabel(carryForwardSource));
+    setResult(null);
+    setSaved(false);
+  }
+
+  function undoCarryForward() {
+    setIncome((prev) => ({
+      ...prev,
+      rentalLossBroughtForward: "",
+      financeCostsBroughtForward: "",
+      selfEmploymentLossBroughtForward: "",
+      capitalLossesBroughtForward: "",
+    }));
+    setCarryForwardAppliedFrom(null);
+    setResult(null);
+    setSaved(false);
+  }
 
   useEffect(() => {
     fetch("/api/tax-years")
@@ -255,6 +366,8 @@ export function TaxCalculatorForm() {
     setStudentLoanPlan(entry.studentLoan?.plan ?? "none");
     setHasPostgraduateLoan(Boolean(entry.studentLoan?.hasPostgraduateLoan));
     setReceivingMarriageAllowance(Boolean(entry.marriageAllowance?.requested));
+    setGivingMarriageAllowance(Boolean(entry.marriageAllowance?.giving));
+    setCarryForwardAppliedFrom(null); // the saved entry's own figures replace any filled in from last year
     if (entry.taxYear) setTaxYear(entry.taxYear);
     if (entry.region) setRegion(entry.region);
     if (
@@ -298,6 +411,8 @@ export function TaxCalculatorForm() {
     setStudentLoanPlan("none");
     setHasPostgraduateLoan(false);
     setReceivingMarriageAllowance(false);
+    setGivingMarriageAllowance(false);
+    setCarryForwardAppliedFrom(null);
     setShowOtherIncome(false);
     setShowExpenses(false);
     setShowRentARoomExpenses(false);
@@ -318,7 +433,8 @@ export function TaxCalculatorForm() {
     mainResidenceFullyExempt ||
     studentLoanPlan !== "none" ||
     hasPostgraduateLoan ||
-    receivingMarriageAllowance;
+    receivingMarriageAllowance ||
+    givingMarriageAllowance;
 
   function handleClearAll() {
     if (formHasInput) {
@@ -430,6 +546,7 @@ export function TaxCalculatorForm() {
       studentLoanPlan,
       hasPostgraduateLoan,
       receivingMarriageAllowance,
+      givingMarriageAllowance,
     };
 
     setLoading(true);
@@ -499,6 +616,81 @@ export function TaxCalculatorForm() {
             </div>
           )}
 
+          {!editingId && carryForwardSource && !carryForwardDismissed && !carryForwardAppliedFrom && (
+            <div className="rounded-lg bg-brand-50 px-3 py-3 text-xs text-brand-700">
+              <p className="font-medium">
+                Bring forward losses and unused relief from {previousYearLabel}?
+              </p>
+              {carryForwardCandidates.length > 1 && (
+                <select
+                  value={carryForwardSource._id ?? ""}
+                  onChange={(e) => setCarryForwardSourceId(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-brand-100 bg-white py-2 px-3 text-base text-slate-900 outline-none focus:border-brand-500"
+                  aria-label="Which saved calculation to bring figures forward from"
+                >
+                  {carryForwardCandidates.map((e) => (
+                    <option key={e._id} value={e._id}>
+                      Saved {savedDateLabel(e)}
+                      {typeof e.netIncome === "number" ? ` · net income ${GBP.format(e.netIncome)}` : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <p className="mt-1.5">
+                Your {previousYearLabel} calculation saved on {savedDateLabel(carryForwardSource)} carried forward:
+              </p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                {(() => {
+                  const f = carryForwardFigures(carryForwardSource);
+                  return (
+                    <>
+                      {f.rentalLoss > 0 && <li>Rental loss: {GBP.format(f.rentalLoss)}</li>}
+                      {f.financeCosts > 0 && <li>Unused mortgage interest relief: {GBP.format(f.financeCosts)}</li>}
+                      {f.selfEmploymentLoss > 0 && <li>Self-employment loss: {GBP.format(f.selfEmploymentLoss)}</li>}
+                      {f.capitalLosses > 0 && <li>Capital losses: {GBP.format(f.capitalLosses)}</li>}
+                    </>
+                  );
+                })()}
+              </ul>
+              <p className="mt-1.5 text-brand-700/80">
+                Check these against your Self Assessment return before using them. Losses only carry
+                forward if you have reported them to HMRC (HM Revenue &amp; Customs).
+              </p>
+              <div className="mt-2.5 flex gap-4">
+                <button
+                  type="button"
+                  onClick={applyCarryForward}
+                  className="font-medium underline hover:no-underline"
+                >
+                  Use these figures
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCarryForwardDismissed(true)}
+                  className="font-medium underline hover:no-underline"
+                >
+                  No thanks
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!editingId && carryForwardAppliedFrom && (
+            <div className="flex items-center justify-between rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
+              <span>
+                Brought-forward figures filled in from your {previousYearLabel} calculation saved on{" "}
+                {carryForwardAppliedFrom}. You can change them below.
+              </span>
+              <button
+                type="button"
+                onClick={undoCarryForward}
+                className="ml-3 shrink-0 font-medium underline hover:no-underline"
+              >
+                Undo
+              </button>
+            </div>
+          )}
+
           <MoneyField
             label="Employment income (salary)"
             value={income.employmentIncome}
@@ -520,7 +712,7 @@ export function TaxCalculatorForm() {
               <select
                 value={taxYear}
                 onChange={(e) => setTaxYear(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm font-medium text-slate-900 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base font-medium text-slate-900 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
               >
                 {years.length === 0 && <option value="">No years found</option>}
                 {years.map((y) => (
@@ -564,7 +756,7 @@ export function TaxCalculatorForm() {
                 <select
                   value={studentLoanPlan}
                   onChange={(e) => setStudentLoanPlan(e.target.value as typeof studentLoanPlan)}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm font-medium text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-base font-medium text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 >
                   <option value="none">No undergraduate loan</option>
                   <option value="plan1">Plan 1</option>
@@ -597,7 +789,10 @@ export function TaxCalculatorForm() {
                 <input
                   type="checkbox"
                   checked={receivingMarriageAllowance}
-                  onChange={(e) => setReceivingMarriageAllowance(e.target.checked)}
+                  onChange={(e) => {
+                    setReceivingMarriageAllowance(e.target.checked);
+                    if (e.target.checked) setGivingMarriageAllowance(false);
+                  }}
                   className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                 />
                 <span>
@@ -614,6 +809,32 @@ export function TaxCalculatorForm() {
                 — if your own income turns out too high once you
                 calculate, the results will flag that you may not
                 actually be eligible.
+              </p>
+
+              <label className="mt-4 flex items-start gap-2 text-xs text-slate-500">
+                <input
+                  type="checkbox"
+                  checked={givingMarriageAllowance}
+                  onChange={(e) => {
+                    setGivingMarriageAllowance(e.target.checked);
+                    if (e.target.checked) setReceivingMarriageAllowance(false);
+                  }}
+                  className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                <span>
+                  I am giving part of my Marriage Allowance to my spouse or
+                  civil partner
+                </span>
+              </label>
+              <p className="mt-1.5 text-xs text-slate-400">
+                Only tick this if your own income is{" "}
+                <strong className="text-slate-500">below your Personal Allowance</strong>{" "}
+                (£12,570). You give up £1,260 of your allowance so your
+                partner can reduce their tax by up to £252. If your income is
+                above £11,310, giving it away can mean you pay a little tax
+                yourself — the results include that. Your partner&apos;s
+                saving shows on their own calculation, with the box above
+                ticked. You can tick one box or the other, not both.
               </p>
             </div>
           </div>
@@ -678,7 +899,7 @@ export function TaxCalculatorForm() {
                             min="0"
                             value={rentalExpenses[category]}
                             onChange={(e) => updateExpense(category, e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 py-1.5 pl-5 pr-2 text-sm outline-none focus:border-brand-500"
+                            className="w-full rounded-lg border border-slate-200 py-1.5 pl-5 pr-2 text-base outline-none focus:border-brand-500"
                             placeholder="0"
                           />
                         </div>
@@ -798,7 +1019,7 @@ export function TaxCalculatorForm() {
                             min="0"
                             value={rentARoomExpenses[category]}
                             onChange={(e) => updateRentARoomExpense(category, e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 py-1.5 pl-5 pr-2 text-sm outline-none focus:border-brand-500"
+                            className="w-full rounded-lg border border-slate-200 py-1.5 pl-5 pr-2 text-base outline-none focus:border-brand-500"
                             placeholder="0"
                           />
                         </div>
@@ -863,7 +1084,7 @@ export function TaxCalculatorForm() {
                             min="0"
                             value={businessExpenses[category]}
                             onChange={(e) => updateBusinessExpense(category, e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 py-1.5 pl-5 pr-2 text-sm outline-none focus:border-brand-500"
+                            className="w-full rounded-lg border border-slate-200 py-1.5 pl-5 pr-2 text-base outline-none focus:border-brand-500"
                             placeholder="0"
                           />
                         </div>
@@ -1548,6 +1769,32 @@ function ResultCard({ result }: { result: CalculationResult }) {
             <span className="font-medium text-emerald-800">
               {GBP.format(result.reliefAtSource.additionalPensionRelief)}
             </span>
+          </div>
+        )}
+
+        {result.marriageAllowance.giving && (
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            {result.marriageAllowance.giverAppearsEligible ? (
+              <>
+                Marriage Allowance: you have given{" "}
+                {GBP.format(result.marriageAllowance.amountGiven)} of your Personal Allowance to your
+                partner.
+                {result.marriageAllowance.giverIncomeAboveReducedAllowance > 0 && (
+                  <>
+                    {" "}
+                    {GBP.format(result.marriageAllowance.giverIncomeAboveReducedAllowance)} of your income
+                    now sits above your reduced allowance, so you may pay some tax because of this.
+                  </>
+                )}{" "}
+                Your partner&apos;s saving, up to £252, shows on their own calculation.
+              </>
+            ) : (
+              <span className="text-amber-600">
+                ⚠ Marriage Allowance was applied, but your income is not below your Personal Allowance
+                (GOV.UK says it must be below), so you may not qualify to give any away. Double-check
+                before relying on this figure.
+              </span>
+            )}
           </div>
         )}
 

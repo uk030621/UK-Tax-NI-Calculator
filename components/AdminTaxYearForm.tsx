@@ -284,7 +284,7 @@ export function AdminTaxYearForm() {
             <select
               value={copyFromYear}
               onChange={(e) => applyCopyFrom(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm font-medium text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base font-medium text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
             >
               <option value="">Start from scratch</option>
               {distinctYears.map((y) => (
@@ -647,7 +647,7 @@ function NumberField({
           placeholder={placeholder}
           className={`w-full rounded-xl border border-slate-200 bg-white py-2.5 ${
             prefix ? "pl-7" : "pl-3"
-          } ${suffix ? "pr-8" : "pr-3"} text-sm font-medium text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100`}
+          } ${suffix ? "pr-8" : "pr-3"} text-base font-medium text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100`}
         />
         {suffix && (
           <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">

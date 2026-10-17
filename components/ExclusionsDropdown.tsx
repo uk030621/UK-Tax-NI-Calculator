@@ -59,11 +59,11 @@ const EXCLUSIONS: Exclusion[] = [
       "If your income is high enough that this might apply to you, a financial adviser or Chartered Accountant can check whether you've inadvertently exceeded your tapered allowance — the tax charge for doing so is separate from anything this calculator shows.",
   },
   {
-    topic: "Marriage Allowance — transferring spouse's eligibility",
+    topic: "Marriage Allowance — checking your partner's side",
     whyExcluded:
-      "This app lets you model receiving a Marriage Allowance transfer, and warns you if your own income looks too high to qualify as the recipient. It has no way to check the other half of the rule — that your spouse or civil partner genuinely has unused Personal Allowance to give away in the first place, since this app only ever calculates one person's tax at a time.",
+      "This app lets you model either side of a Marriage Allowance transfer. If you receive it, it warns you when your own income looks too high to qualify. If you give it, it warns you when your income is above your Personal Allowance. It only ever calculates one person's tax at a time, so it cannot check your partner's side of the same transfer, or how the two figures combine for the couple.",
     advice:
-      "Run your partner's income through this calculator separately (or GOV.UK's own Marriage Allowance checker) to confirm they're actually eligible to transfer before relying on the saving shown here.",
+      "Run your partner's income through this calculator separately, with the opposite box ticked, or use GOV.UK's own Marriage Allowance checker, to confirm you both qualify before relying on the saving shown here.",
   },
   {
     topic: "VAT, Inheritance Tax, and Stamp Duty / LBTT",
@@ -71,13 +71,6 @@ const EXCLUSIONS: Exclusion[] = [
       "These are entirely different tax regimes from income tax, National Insurance, and Capital Gains Tax — not a gap in this calculator so much as genuinely outside what it was built to do.",
     advice:
       "For VAT or Inheritance Tax planning, a Chartered Accountant is the right first call. For Stamp Duty Land Tax (or LBTT in Scotland) on a property purchase, your conveyancing solicitor will normally calculate this as a standard part of the transaction.",
-  },
-  {
-    topic: "Automatic loss & relief carry-forward between saved calculations",
-    whyExcluded:
-      "Rental losses, self-employment losses, and unused mortgage interest relief all carry forward correctly — but only when you manually enter last year's figure into this year's calculation. The app deliberately never does this automatically, even between two of your own saved calculations, because it has no reliable way to confirm which saved entry is genuinely the immediately preceding tax year.",
-    advice:
-      "This one doesn't need a professional — just note the \"carry forward to next year\" figures shown in your results, and enter them yourself the next time you calculate.",
   },
 ];
 
@@ -97,7 +90,7 @@ export function ExclusionsDropdown() {
       <select
         value={selectedTopic}
         onChange={(e) => setSelectedTopic(e.target.value)}
-        className="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm font-medium text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+        className="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base font-medium text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
       >
         {EXCLUSIONS.map((e) => (
           <option key={e.topic} value={e.topic}>

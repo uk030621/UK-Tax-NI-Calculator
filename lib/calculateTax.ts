@@ -200,6 +200,15 @@ export interface MultiIncomeInput {
 
   /** True if this taxpayer is the RECIPIENT of a Marriage Allowance transfer from a spouse/civil partner — the app has no way to verify the transferring partner's own eligibility. */
   receivingMarriageAllowance?: boolean;
+
+  /**
+   * True if this taxpayer is the GIVER in a Marriage Allowance transfer: they
+   * give up part of their own Personal Allowance so a spouse/civil partner
+   * can claim it. Only valid when this taxpayer's income is below their own
+   * Personal Allowance. Cannot be combined with receivingMarriageAllowance
+   * (the API rejects both together).
+   */
+  givingMarriageAllowance?: boolean;
 }
 
 export interface BandBreakdown {
@@ -334,6 +343,13 @@ export interface CalculationResult {
     requested: boolean;
     amountTransferred: number; // 0 unless requested
     recipientAppearsEligible: boolean; // false if this taxpayer's own income looks too high to actually qualify
+    /** True if this taxpayer is giving away part of their own Personal Allowance. */
+    giving: boolean;
+    amountGiven: number; // 0 unless giving
+    /** false if this taxpayer's income is above their Personal Allowance, so they can't give any away. */
+    giverAppearsEligible: boolean;
+    /** Income that now sits above the reduced allowance and so may be taxed because of the transfer (0 unless giving). */
+    giverIncomeAboveReducedAllowance: number;
   };
 }
 
@@ -649,6 +665,18 @@ export function calculateMultiIncomeTax(
     ? rates.marriageAllowanceTransferable
     : 0;
 
+  // The other side: GIVING part of your own allowance. HMRC's rule (GOV.UK
+  // "Marriage Allowance") is that the giver's income must be below their own
+  // Personal Allowance. Giving away £1,260 can leave some of a giver's income
+  // above their reduced allowance, so they can end up paying a little tax —
+  // the calculation below handles that automatically because the allowance
+  // is simply lower; `giverIncomeAboveReducedAllowance` just reports how
+  // much income that affects.
+  const marriageAllowanceGiving = Boolean(input.givingMarriageAllowance);
+  const marriageAllowanceGiven = marriageAllowanceGiving
+    ? rates.marriageAllowanceTransferable
+    : 0;
+
   // --- Personal allowance (tapered on adjusted net income: total income
   // across all streams except gains, less grossed-up pension
   // contributions and Gift Aid — same "adjusted net income" measure also
@@ -660,7 +688,7 @@ export function calculateMultiIncomeTax(
   );
   const personalAllowance = taperedPersonalAllowance(
     totalIncomeForTaper,
-    rates.personalAllowance + marriageAllowanceAmount
+    rates.personalAllowance + marriageAllowanceAmount - marriageAllowanceGiven
   );
 
   let allowanceLeft = personalAllowance;
@@ -898,6 +926,19 @@ export function calculateMultiIncomeTax(
     !marriageAllowanceRequested ||
     position + marriageAllowanceAmount <= higherRateThreshold;
 
+  // Giver's own test: income (all income except gains) must be strictly below their
+  // own Personal Allowance. Compared with the unreduced allowance, because
+  // the question is whether they had spare allowance to give in the first place.
+  const incomeForGivingTest = nonSavingsIncome + savingsInterest + dividendIncome;
+  const marriageAllowanceGiverAppearsEligible =
+    !marriageAllowanceGiving || incomeForGivingTest < rates.personalAllowance;
+  const giverIncomeAboveReducedAllowance = marriageAllowanceGiving
+    ? Math.min(
+        marriageAllowanceGiven,
+        Math.max(0, incomeForGivingTest - (rates.personalAllowance - marriageAllowanceGiven))
+      )
+    : 0;
+
   const incomeTaxBeforeRelief =
     nonSavingsResult.tax + savingsTaxed.tax + dividendsTaxed.tax;
   const totalIncomeTax = Math.max(
@@ -1062,6 +1103,10 @@ export function calculateMultiIncomeTax(
       requested: marriageAllowanceRequested,
       amountTransferred: marriageAllowanceAmount,
       recipientAppearsEligible: marriageAllowanceRecipientAppearsEligible,
+      giving: marriageAllowanceGiving,
+      amountGiven: marriageAllowanceGiven,
+      giverAppearsEligible: marriageAllowanceGiverAppearsEligible,
+      giverIncomeAboveReducedAllowance,
     },
   };
 

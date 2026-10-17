@@ -370,6 +370,10 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
         substitute for professional tax advice.
       </p>
       <p className="mt-2 text-center text-xs text-slate-400">
+        <a href="/guide" className="font-medium text-brand-600 hover:text-brand-700">
+          User guide
+        </a>
+        {" · "}
         <a href="/terms" className="font-medium text-brand-600 hover:text-brand-700">
           Terms of Service
         </a>

@@ -120,7 +120,7 @@ export function AdminSiteSettingsForm() {
               value={data.businessName}
               onChange={(e) => update("businessName", e.target.value)}
               placeholder="e.g. Jane Smith, trading as UK Tax & NI Calculator"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-base outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
           </Field>
 
@@ -130,7 +130,7 @@ export function AdminSiteSettingsForm() {
               onChange={(e) => update("address", e.target.value)}
               rows={2}
               placeholder="Shown on your Terms and Privacy pages"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-base outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
           </Field>
 
@@ -140,7 +140,7 @@ export function AdminSiteSettingsForm() {
               value={data.contactEmail}
               onChange={(e) => update("contactEmail", e.target.value)}
               placeholder="e.g. support@yourdomain.com"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-base outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
           </Field>
 
@@ -150,7 +150,7 @@ export function AdminSiteSettingsForm() {
               value={data.icoReference}
               onChange={(e) => update("icoReference", e.target.value)}
               placeholder="Once registered at ico.org.uk"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-base outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
           </Field>
 
@@ -159,7 +159,7 @@ export function AdminSiteSettingsForm() {
               value={data.dataRegionNote}
               onChange={(e) => update("dataRegionNote", e.target.value)}
               rows={3}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-base outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
             <p className="mt-1 text-xs text-slate-400">
               Pre-filled with a generic-but-accurate line. Worth tightening

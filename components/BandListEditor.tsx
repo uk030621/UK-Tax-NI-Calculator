@@ -42,7 +42,7 @@ export function BandListEditor({
               type="number"
               value={band.threshold}
               onChange={(e) => updateBand(i, "threshold", e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-6 pr-2 text-sm outline-none focus:border-brand-500"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-6 pr-2 text-base outline-none focus:border-brand-500"
               placeholder="Threshold"
             />
           </div>
@@ -52,7 +52,7 @@ export function BandListEditor({
               step="0.01"
               value={(band.rate * 100).toFixed(2).replace(/\.?0+$/, "") || "0"}
               onChange={(e) => updateBand(i, "rate", e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-2 pr-6 text-sm outline-none focus:border-brand-500"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-2 pr-6 text-base outline-none focus:border-brand-500"
               placeholder="Rate"
             />
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">

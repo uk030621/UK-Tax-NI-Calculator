@@ -93,23 +93,28 @@ region.
   purposes), and an optional flat weekly amount below it. The app
   shows this as an informational note in the results, never as a
   deduction from the total.
-- **Rental losses, self-employment losses, and unused mortgage interest
-  relief now all carry forward — manually, between separate
-  calculations, not automatically across tax years.** Per PIM4210 (rental)
+- **Rental losses, self-employment losses, unused mortgage interest
+  relief and capital losses all carry forward — offered from your
+  previous year's saved calculation, and applied only when you confirm.** Per PIM4210 (rental)
   and ITA 2007 s83 / BIM85060 (self-employment), a loss is relieved
   against the *first available* profit of the same activity in a later
   year, indefinitely, with any excess carrying forward again. Per
   PIM4460, unused finance-cost relief (when the 20% mortgage interest
   credit is capped below the full interest paid) works the same way.
-  Three input fields — "Rental losses brought forward," "Self-employment
-  losses brought forward," and "Unused finance costs brought forward" —
-  let a user enter last year's carried-forward figures by hand; the app
-  doesn't look these up automatically from a previous calculation, even
-  a saved one, because it has no reliable way to confirm a saved
-  calculation is actually for the *immediately preceding* tax year
-  rather than some other year entirely — guessing wrong would silently
-  double-count a loss, which is worse than not automating it at all.
-  (Automatic carry-forward, done properly, is noted as a next step below.)
+  Four input fields — rental losses, self-employment losses, unused
+  finance costs and capital losses brought forward — hold last year's
+  carried-forward figures. When a signed-in user has a saved calculation
+  for exactly the tax year before the one they are calculating (the
+  label is matched arithmetically, e.g. `2026-27` → `2025-26`), the form
+  offers to fill the fields from it. Nothing is filled until the user
+  clicks "Use these figures"; the form then says which saved calculation
+  the figures came from and offers Undo. If there are several saved
+  calculations for that year the user picks one, newest first. Changing
+  the tax year clears figures that were filled this way, so they cannot
+  stay behind under the wrong year. The offer is hidden while editing a
+  saved calculation, because that entry's own figures are restored
+  instead. Nothing is ever applied silently, because a wrong guess would
+  double-count a loss.
 - **Foreign Tax Credit Relief only covers dividends, not capital gains,
   and no country-specific treaty rate cap is enforced.** Per HMRC's
   HS263, the credit is the *smaller* of the foreign tax withheld and
@@ -171,19 +176,24 @@ region.
   loans cover Plans 1/2/4/5 plus Postgraduate (9%/6% of income above
   each plan's threshold, thresholds confirmed current for both
   2025/26 and 2026/27 — Plans 1/2/4 moved between the two years).
-  Marriage Allowance is a toggle that adds £1,260 to the recipient's
-  own Personal Allowance; since this app only ever models one
-  taxpayer, it can't verify the *transferring* spouse's own
-  eligibility, but it does check whether the *recipient's* own income
-  looks too high to qualify and shows a warning if so, rather than
-  silently applying a transfer HMRC wouldn't actually allow.
+  Marriage Allowance has two toggles, one for each side, and only one
+  can be ticked. Receiving adds £1,260 to your own Personal Allowance
+  and warns if your income looks too high to qualify as the recipient.
+  Giving takes £1,260 off your own Personal Allowance and warns if your
+  income is not below your Personal Allowance, which is GOV.UK's condition
+  (income "below" the allowance) for the person giving. A giver whose income is above the reduced
+  allowance pays a little tax because of the transfer, and the results
+  say how much income that affects. Since the app only ever models one
+  taxpayer, it can't check the other partner's side of the same
+  transfer.
+- **An in-app user guide** at `/guide` (`app/guide/page.tsx`), linked from the footer of the landing page and the calculator. The text lives in `content/userGuide.ts` as Markdown and is rendered by `components/MarkdownGuide.tsx`. The administrator-only sections are shown only to signed-in administrators. When the standalone `-user-guide.md` changes, update `content/userGuide.ts` to match.
 - **A "What this calculator doesn't cover" dropdown** (`components/ExclusionsDropdown.tsx`,
   shown on the main page) explicitly lists every deliberate gap —
   Business Asset Disposal Relief, partial Private Residence Relief,
   the Class 1+4 NI cap, foreign tax credit on gains, non-UK residence
   status, capital allowances for vehicles, Pension
-  Annual Allowance tapering, the Marriage Allowance transferor gap
-  above, VAT/IHT/SDLT, and the manual-only carry-forward design — each
+  Annual Allowance tapering, checking the other partner's side of a
+  Marriage Allowance transfer, and VAT/IHT/SDLT — each
   with a plain-English reason and concrete advice on where to get
   proper help (a Chartered Accountant, a Chartered Tax Adviser, or a
   specific piece of HMRC guidance, depending on the topic).
@@ -771,13 +781,10 @@ you on the outdated, incompatible adapter underneath.
 - Extend `calculateTax.ts` if you want to model further adjustments:
   student loan repayments, pension contributions (which extend the
   basic/higher-rate bands), salary sacrifice, or marriage allowance.
-- **Automatic carry-forward** (rather than the current manual
-  brought-forward input fields) is a natural next step for signed-in
-  users: look up the saved calculation for the specific immediately-
-  preceding tax year (matching `taxYear` strings sequentially, e.g.
-  `"2025-26"` → `"2026-27"`) and prefill all three brought-forward
-  fields from its carried-forward output. Deliberately not built yet —
-  see the Simplifications note on why guessing the wrong "last"
+- **Carry-forward** is now offered from the saved calculation for the
+  immediately preceding tax year (see the Simplifications note). A
+  possible extension is carrying the figures forward automatically at
+  save time; it was deliberately not built that way, because guessing the wrong "last"
   calculation would be worse than not automating it.
 - The `calculations` collection has no automatic cleanup — add a TTL
   index if you don't want history to grow unbounded.

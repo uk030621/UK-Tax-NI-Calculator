@@ -270,6 +270,33 @@ function runChecks(rows: TaxYearRates[]) {
   expectFlag("Scottish recipient appears eligible at £43,662 (gov.scot intermediate-rate limit)", run({ employmentIncome: 43662, receivingMarriageAllowance: true }, sc).marriageAllowance.recipientAppearsEligible, true);
   expectFlag("Scottish recipient flagged as ineligible at £43,700", run({ employmentIncome: 43700, receivingMarriageAllowance: true }, sc).marriageAllowance.recipientAppearsEligible, false);
 
+  // Giving side — GOV.UK "Marriage Allowance": the giver's income must be
+  // below their Personal Allowance, and giving £1,260 away can leave a giver
+  // paying a little tax. These cases are built from that rule (the
+  // arithmetic is hand-checkable); GOV.UK's own page works one example in
+  // prose but not with these figures, so they are self-constructed.
+  const giverLow = run({ employmentIncome: 8000, givingMarriageAllowance: true });
+  expectNumber("Giver at £8,000: Personal Allowance after giving £1,260", giverLow.personalAllowance, 11310);
+  expectNumber("Giver at £8,000: income tax", giverLow.totalIncomeTax, 0);
+  expectNumber("Giver at £8,000: income above reduced allowance", giverLow.marriageAllowance.giverIncomeAboveReducedAllowance, 0);
+  const giverMid = run({ employmentIncome: 12000, givingMarriageAllowance: true });
+  expectNumber("Giver at £12,000: income tax ((£12,000 − £11,310) × 20%)", giverMid.totalIncomeTax, 138);
+  expectNumber("Giver at £12,000: income above reduced allowance", giverMid.marriageAllowance.giverIncomeAboveReducedAllowance, 690);
+  expectFlag("Giver at £12,000 appears eligible", giverMid.marriageAllowance.giverAppearsEligible, true);
+  const recipientAt30k = run({ employmentIncome: 30000, receivingMarriageAllowance: true });
+  const recipientNoMa = run({ employmentIncome: 30000 });
+  expectNumber(
+    "Couple: recipient saves £252, giver at £12,000 pays £138, net saving",
+    (recipientNoMa.totalIncomeTax - recipientAt30k.totalIncomeTax) - giverMid.totalIncomeTax,
+    114
+  );
+  const giverAtPA = run({ employmentIncome: 12570, givingMarriageAllowance: true });
+  expectNumber("Giver at exactly £12,570: tax cancels the whole £252 saving", giverAtPA.totalIncomeTax, 252);
+  expectFlag("Giver at exactly £12,570 flagged: GOV.UK says income must be below the allowance", giverAtPA.marriageAllowance.giverAppearsEligible, false);
+  expectFlag("Giver at £12,569 appears eligible", run({ employmentIncome: 12569, givingMarriageAllowance: true }).marriageAllowance.giverAppearsEligible, true);
+  expectFlag("Giver at £12,571 flagged as ineligible", run({ employmentIncome: 12571, givingMarriageAllowance: true }).marriageAllowance.giverAppearsEligible, false);
+  expectFlag("Not giving: no giving flag", run({ employmentIncome: 8000 }).marriageAllowance.giving, false);
+
   section("Smoke test — every tax year and region, all features switched on at once");
   const kitchenSink: MultiIncomeInput = {
     employmentIncome: 55000, pensionIncome: 8000,

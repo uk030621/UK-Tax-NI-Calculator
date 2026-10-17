@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     studentLoanPlan,
     hasPostgraduateLoan,
     receivingMarriageAllowance,
+    givingMarriageAllowance,
   } = body;
 
   if (!taxYear || (region !== "uk" && region !== "scotland")) {
@@ -76,11 +77,20 @@ export async function POST(request: NextRequest) {
     ["mainResidenceFullyExempt", mainResidenceFullyExempt],
     ["hasPostgraduateLoan", hasPostgraduateLoan],
     ["receivingMarriageAllowance", receivingMarriageAllowance],
+    ["givingMarriageAllowance", givingMarriageAllowance],
     ["rentARoomShared", rentARoomShared],
   ] as const) {
     if (value !== undefined && typeof value !== "boolean") {
       return NextResponse.json({ error: `${key} must be a boolean` }, { status: 400 });
     }
+  }
+
+  // One person can't both receive and give in the same calculation.
+  if (receivingMarriageAllowance && givingMarriageAllowance) {
+    return NextResponse.json(
+      { error: "Choose either receiving or giving Marriage Allowance, not both" },
+      { status: 400 }
+    );
   }
 
   const validPlans = ["none", "plan1", "plan2", "plan4", "plan5", undefined];
@@ -180,6 +190,7 @@ export async function POST(request: NextRequest) {
       studentLoanPlan,
       hasPostgraduateLoan,
       receivingMarriageAllowance,
+      givingMarriageAllowance,
     },
     rates
   );

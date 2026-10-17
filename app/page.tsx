@@ -71,6 +71,9 @@ export default async function Home({
             savings, dividends and capital gains, taxed together in the
             order HMRC applies them. Sign in with Google to get started.
           </p>
+          <a href="/guide" className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 px-3.5 py-1.5 text-sm font-medium text-brand-700 transition hover:bg-brand-100">
+            <span aria-hidden="true">📖</span> Read the user guide
+          </a>
 
           {!signedIn && (
             <div className="mt-6">
@@ -129,6 +132,9 @@ export default async function Home({
           <p className="mt-1 text-sm text-slate-500">
             Income tax and National Insurance, by tax year
           </p>
+          <a href="/guide" className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 px-3.5 py-1.5 text-sm font-medium text-brand-700 transition hover:bg-brand-100">
+            <span aria-hidden="true">📖</span> User guide: how to use each section
+          </a>
         </div>
         <AuthButton />
       </header>
@@ -145,6 +151,10 @@ export default async function Home({
           substitute for professional tax advice.
         </p>
         <p>
+          <a href="/guide" className="font-medium text-brand-600 hover:text-brand-700">
+            User guide
+          </a>
+          {" · "}
           <a href="/terms" className="font-medium text-brand-600 hover:text-brand-700">
             Terms of Service
           </a>
