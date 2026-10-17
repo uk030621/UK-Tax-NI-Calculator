@@ -39,9 +39,9 @@ function getPriceLabel(): string | null {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ payment?: string }>;
+  searchParams: Promise<{ payment?: string; error?: string }>;
 }) {
-  const { payment } = await searchParams;
+  const { payment, error: authError } = await searchParams;
   const session = await getServerSession(authOptions);
   const signedIn = Boolean(session?.user);
   // Re-checked on every request, not just at sign-in — a database
@@ -74,6 +74,19 @@ export default async function Home({
           <a href="/guide" className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 px-3.5 py-1.5 text-sm font-medium text-brand-700 transition hover:bg-brand-100">
             <span aria-hidden="true">📖</span> Read the user guide
           </a>
+
+          {!signedIn && authError && (
+            <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-left text-sm text-amber-700">
+              Sign-in didn&apos;t complete (error code: <strong>{authError}</strong>).{" "}
+              {authError === "Configuration"
+                ? "The server's sign-in settings look incomplete — the site owner should check the environment variables."
+                : authError === "OAuthCallback" || authError === "OAuthSignin"
+                  ? "Google and this site couldn't finish the handshake — the site owner should check the web address and redirect settings."
+                  : authError === "Callback" || authError === "OAuthCreateAccount" || authError === "AdapterError"
+                    ? "Google accepted you, but the account couldn't be saved — the site owner should check the database connection."
+                    : "Please try again, and tell the site owner if it keeps happening."}
+            </p>
+          )}
 
           {!signedIn && (
             <div className="mt-6">
