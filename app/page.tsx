@@ -77,14 +77,16 @@ export default async function Home({
 
           {!signedIn && authError && (
             <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-left text-sm text-amber-700">
-              Sign-in didn&apos;t complete (error code: <strong>{authError}</strong>).{" "}
+              Sign-in didn&apos;t complete{authError !== "undefined" && (<> (error code: <strong>{authError}</strong>)</>)}.{" "}
               {authError === "Configuration"
                 ? "The server's sign-in settings look incomplete — the site owner should check the environment variables."
                 : authError === "OAuthCallback" || authError === "OAuthSignin"
                   ? "Google and this site couldn't finish the handshake — the site owner should check the web address and redirect settings."
                   : authError === "Callback" || authError === "OAuthCreateAccount" || authError === "AdapterError"
                     ? "Google accepted you, but the account couldn't be saved — the site owner should check the database connection."
-                    : "Please try again, and tell the site owner if it keeps happening."}
+                    : authError === "undefined"
+                      ? "The sign-in service didn't respond properly — the site owner should check that the web address and secret settings are correct and that the site has been redeployed."
+                      : "Please try again, and tell the site owner if it keeps happening."}
             </p>
           )}
 
