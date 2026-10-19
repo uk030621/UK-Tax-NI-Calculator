@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/Spinner";
 import type { CalculationResult, BandBreakdown } from "@/lib/calculateTax";
@@ -692,19 +692,7 @@ export function TaxCalculatorForm() {
             </div>
           )}
 
-          <MoneyField
-            label="Employment income (salary)"
-            value={income.employmentIncome}
-            onChange={(v) => updateField("employmentIncome", v)}
-            placeholder="e.g. 45,000"
-          />
-          <p className="-mt-3 text-xs text-slate-400">
-            Use your taxable pay — the &quot;pay&quot; figure on your P60, which is already
-            after any pension contributions (including AVCs) taken from your payslip before tax.
-            Paying into a personal pension or SIPP yourself? That goes under
-            Reliefs, in the &quot;Add…&quot; section below.
-          </p>
-
+          <CategoryCard tone="setup" icon="📅" title="Tax year and region">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -746,10 +734,26 @@ export function TaxCalculatorForm() {
               </div>
             </div>
           </div>
+          </CategoryCard>
 
-          <div className="space-y-4 rounded-xl bg-slate-50 p-4">
-            <div>
-              <CategoryHeader label="Student loan" />
+          <CategoryCard tone="income" icon="💼" title="Employment" badge={money(income.employmentIncome)}>
+          <MoneyField
+            label="Employment income (salary)"
+            value={income.employmentIncome}
+            onChange={(v) => updateField("employmentIncome", v)}
+            placeholder="e.g. 45,000"
+          />
+          <p className="mt-1.5 text-xs text-slate-400">
+            Use your taxable pay — the &quot;pay&quot; figure on your P60, which is already
+            after any pension contributions (including AVCs) taken from your payslip before tax.
+            Paying into a personal pension or SIPP yourself? That goes under
+            Reliefs, in the &quot;Add…&quot; section below.
+          </p>
+          </CategoryCard>
+
+
+          <div className="space-y-4">
+            <CategoryCard tone="adjust" icon="🎓" title="Student loan" collapsible hasData={studentLoanPlan !== "none" || hasPostgraduateLoan}>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
                   Student loan plan
@@ -782,10 +786,9 @@ export function TaxCalculatorForm() {
                   an undergraduate plan — both are repaid at once)
                 </span>
               </label>
-            </div>
+            </CategoryCard>
 
-            <div className="border-t border-slate-200 pt-4">
-              <CategoryHeader label="Marriage Allowance" />
+            <CategoryCard tone="adjust" icon="🤝" title="Marriage Allowance" collapsible hasData={receivingMarriageAllowance || givingMarriageAllowance}>
               <label className="flex items-start gap-2 text-xs text-slate-500">
                 <input
                   type="checkbox"
@@ -837,7 +840,7 @@ export function TaxCalculatorForm() {
                 saving shows on their own calculation, with the box above
                 ticked. You can tick one box or the other, not both.
               </p>
-            </div>
+            </CategoryCard>
           </div>
 
           <div>
@@ -851,9 +854,8 @@ export function TaxCalculatorForm() {
           </div>
 
           {showOtherIncome && (
-            <div className="space-y-4 rounded-xl bg-slate-50 p-4">
-              <div>
-                <CategoryHeader label="Pension" />
+            <div className="space-y-4">
+              <CategoryCard tone="income" icon="🌅" title="Pension" collapsible hasData={filled(income.pensionIncome)} badge={money(income.pensionIncome)}>
                 <MoneyField
                   label="Pension income"
                   value={income.pensionIncome}
@@ -866,10 +868,9 @@ export function TaxCalculatorForm() {
                   Insurance. Keep this separate from Employment income above
                   so NI isn't wrongly applied to it.
                 </p>
-              </div>
+              </CategoryCard>
 
-              <div className="border-t border-slate-200 pt-4">
-                <CategoryHeader label="Rental" />
+              <CategoryCard tone="income" icon="🏠" title="Rental" collapsible hasData={filled(income.rentalIncome, income.mortgageInterest, income.rentalLossBroughtForward, income.financeCostsBroughtForward) || anyFilled(rentalExpenses)} badge={money(income.rentalIncome)}>
                 <MoneyField
                   label="Rental profit (before expenses/allowance)"
                   value={income.rentalIncome}
@@ -962,10 +963,9 @@ export function TaxCalculatorForm() {
                     this year's interest before the same cap is applied.
                   </p>
                 </div>
-              </div>
+              </CategoryCard>
 
-              <div className="border-t border-slate-200 pt-4">
-                <CategoryHeader label="Rent-a-Room" />
+              <CategoryCard tone="income" icon="🛏️" title="Rent-a-Room" collapsible hasData={filled(income.rentARoomReceipts) || rentARoomShared || anyFilled(rentARoomExpenses)} badge={money(income.rentARoomReceipts)}>
                 <MoneyField
                   label="Rent-a-Room receipts (letting a furnished room in your own home)"
                   value={income.rentARoomReceipts}
@@ -1051,10 +1051,9 @@ export function TaxCalculatorForm() {
                   to an accountant if your expenses genuinely exceed your
                   receipts), and mortgage interest relief on this income.
                 </p>
-              </div>
+              </CategoryCard>
 
-              <div className="border-t border-slate-200 pt-4">
-                <CategoryHeader label="Self-employment" />
+              <CategoryCard tone="income" icon="🛠️" title="Self-employment" collapsible hasData={filled(income.selfEmploymentProfit, income.selfEmploymentLossBroughtForward) || anyFilled(businessExpenses)} badge={money(income.selfEmploymentProfit)}>
                 <MoneyField
                   label="Self-employment income (before expenses/allowance)"
                   value={income.selfEmploymentProfit}
@@ -1125,19 +1124,17 @@ export function TaxCalculatorForm() {
                     unused carries forward again.
                   </p>
                 </div>
-              </div>
+              </CategoryCard>
 
-              <div className="border-t border-slate-200 pt-4">
-                <CategoryHeader label="Savings interest" />
+              <CategoryCard tone="invest" icon="🐖" title="Savings interest" collapsible hasData={filled(income.savingsInterest)} badge={money(income.savingsInterest)}>
                 <MoneyField
                   label="Savings interest"
                   value={income.savingsInterest}
                   onChange={(v) => updateField("savingsInterest", v)}
                   placeholder="e.g. 800"
                 />
-              </div>
-              <div className="border-t border-slate-200 pt-4">
-                <CategoryHeader label="Dividends" />
+              </CategoryCard>
+              <CategoryCard tone="invest" icon="📈" title="Dividends" collapsible hasData={filled(income.dividendIncome, income.foreignTaxWithheldOnDividends)} badge={money(income.dividendIncome)}>
                 <MoneyField
                   label="Dividend income"
                   value={income.dividendIncome}
@@ -1159,9 +1156,8 @@ export function TaxCalculatorForm() {
                     taxed twice on the same dividend.
                   </p>
                 </div>
-              </div>
-              <div className="border-t border-slate-200 pt-4">
-                <CategoryHeader label="Capital gains" />
+              </CategoryCard>
+              <CategoryCard tone="invest" icon="🏷️" title="Capital gains" collapsible hasData={filled(income.capitalGains, income.mainResidenceGain, income.capitalLossesThisYear, income.capitalLossesBroughtForward) || mainResidenceFullyExempt} badge={money(income.capitalGains)}>
 
                 <div>
                   <MoneyField
@@ -1233,10 +1229,9 @@ export function TaxCalculatorForm() {
                     loss than you actually need to this year.
                   </p>
                 </div>
-              </div>
+              </CategoryCard>
 
-              <div className="border-t border-slate-200 pt-4">
-                <CategoryHeader label="Reliefs" />
+              <CategoryCard tone="adjust" icon="🧾" title="Reliefs" collapsible hasData={filled(income.personalPensionContributions, income.giftAidDonations)}>
 
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
                   Personal pension contributions (relief at source)
@@ -1307,10 +1302,9 @@ export function TaxCalculatorForm() {
                     higher-rate bands for any further relief you're due.
                   </p>
                 </div>
-              </div>
+              </CategoryCard>
 
-              <div className="border-t border-slate-200 pt-4">
-                <CategoryHeader label="Child Benefit" />
+              <CategoryCard tone="adjust" icon="👶" title="Child Benefit" collapsible hasData={filled(income.childBenefitReceived)} badge={money(income.childBenefitReceived)}>
                 <MoneyField
                   label="Child Benefit received this year"
                   value={income.childBenefitReceived}
@@ -1326,7 +1320,7 @@ export function TaxCalculatorForm() {
                   away gradually between £60,000 and £80,000 of adjusted
                   net income, fully clawed back at £80,000 and above.
                 </p>
-              </div>
+              </CategoryCard>
             </div>
           )}
 
@@ -1464,11 +1458,158 @@ function SavedCalculationsList({
   );
 }
 
-function CategoryHeader({ label }: { label: string }) {
+/** "£1,500" when the text holds a positive number, otherwise nothing — used for the card badges. */
+function money(value: string): string | undefined {
+  const n = Number(value);
+  return value && Number.isFinite(n) && n > 0 ? GBP.format(n) : undefined;
+}
+
+/** True when the text holds a non-zero number. */
+function filled(...values: (string | undefined)[]): boolean {
+  return values.some((v) => Boolean(v && v.trim() !== "" && Number(v) !== 0));
+}
+
+/** True when any value in a record of text fields is filled in. */
+function anyFilled(record: Record<string, string>): boolean {
+  return filled(...Object.values(record));
+}
+
+type CardTone = "income" | "invest" | "adjust" | "setup";
+
+// Written out in full (not built from strings) so Tailwind can see every class.
+const CARD_TONES: Record<
+  CardTone,
+  { border: string; head: string; title: string; group: string; icon: string; badge: string; groupLabel: string }
+> = {
+  income: {
+    border: "border-blue-200",
+    head: "bg-blue-50",
+    title: "text-blue-900",
+    group: "text-blue-700",
+    icon: "bg-blue-100",
+    badge: "text-blue-800 ring-blue-200",
+    groupLabel: "Income · taxed at your normal rates",
+  },
+  invest: {
+    border: "border-violet-200",
+    head: "bg-violet-50",
+    title: "text-violet-900",
+    group: "text-violet-700",
+    icon: "bg-violet-100",
+    badge: "text-violet-800 ring-violet-200",
+    groupLabel: "Savings & investments · taxed separately",
+  },
+  adjust: {
+    border: "border-teal-200",
+    head: "bg-teal-50",
+    title: "text-teal-900",
+    group: "text-teal-700",
+    icon: "bg-teal-100",
+    badge: "text-teal-800 ring-teal-200",
+    groupLabel: "Reliefs & adjustments",
+  },
+  setup: {
+    border: "border-slate-200",
+    head: "bg-slate-50",
+    title: "text-slate-900",
+    group: "text-slate-600",
+    icon: "bg-slate-200",
+    badge: "text-slate-800 ring-slate-200",
+    groupLabel: "Set-up",
+  },
+};
+
+/**
+ * One tax category on the form: a tinted header with a large bold title, an
+ * icon and a group label, plus a badge showing what has been entered so far.
+ * The colour tells you which kind of figure this is at a glance.
+ */
+function CategoryCard({
+  tone,
+  icon,
+  title,
+  badge,
+  collapsible = false,
+  hasData = false,
+  children,
+}: {
+  tone: CardTone;
+  icon: string;
+  title: string;
+  badge?: string;
+  /** Collapsible cards start closed unless something has been entered in them. */
+  collapsible?: boolean;
+  hasData?: boolean;
+  children: React.ReactNode;
+}) {
+  const t = CARD_TONES[tone];
+  const bodyId = useId();
+  // null = the person hasn't touched it, so follow the data. Once a card has
+  // data (typed, loaded from a saved calculation, or carried forward) it stays
+  // open, so it can never close while the person is mid-edit.
+  const [manual, setManual] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (hasData && manual === null) setManual(true);
+  }, [hasData, manual]);
+  const open = !collapsible || (manual ?? hasData);
+
+  const heading = (
+    <>
+      <span
+        aria-hidden="true"
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl ${t.icon}`}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <h3 className={`text-lg font-bold leading-tight ${t.title}`}>{title}</h3>
+        <p className={`text-xs font-medium ${t.group}`}>{t.groupLabel}</p>
+      </div>
+      {badge ? (
+        <span className={`shrink-0 rounded-full bg-white px-2.5 py-1 text-sm font-semibold ring-1 ${t.badge}`}>
+          {badge}
+        </span>
+      ) : (
+        collapsible &&
+        !open && <span className={`shrink-0 text-xs font-semibold ${t.group}`}>Tap to add</span>
+      )}
+      {collapsible && (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          className={`h-5 w-5 shrink-0 transition-transform ${t.group} ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M5 8l5 5 5-5" />
+        </svg>
+      )}
+    </>
+  );
+
   return (
-    <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-      {label}
-    </p>
+    <section className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${t.border}`}>
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setManual(!open)}
+          aria-expanded={open}
+          aria-controls={bodyId}
+          className={`flex w-full items-center gap-3 px-4 py-3 text-left ${t.head}`}
+        >
+          {heading}
+        </button>
+      ) : (
+        <header className={`flex items-center gap-3 px-4 py-3 ${t.head}`}>{heading}</header>
+      )}
+      {/* Kept mounted when closed, only hidden, so nothing typed is ever lost. */}
+      <div id={bodyId} className={`p-4 ${open ? "" : "hidden"}`}>
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -1681,6 +1822,7 @@ function ResultCard({ result }: { result: CalculationResult }) {
         {result.capitalGainsTax.gross > 0 && (
           <IncomeSection
             title="Capital gains"
+            tone="violet"
             subtitle={capitalGainsSubtitle(result.capitalGainsTax)}
             bands={result.capitalGainsTax.bands}
             tax={result.capitalGainsTax.tax}
@@ -1697,6 +1839,7 @@ function ResultCard({ result }: { result: CalculationResult }) {
         {result.nationalInsurance.total > 0 && (
           <IncomeSection
             title="National Insurance (Class 1)"
+            tone="rose"
             bands={result.nationalInsurance.bands}
             tax={result.nationalInsurance.total}
           />
@@ -1705,6 +1848,7 @@ function ResultCard({ result }: { result: CalculationResult }) {
         {result.nationalInsuranceClass4.total > 0 && (
           <IncomeSection
             title="National Insurance (Class 4, self-employment)"
+            tone="rose"
             bands={result.nationalInsuranceClass4.bands}
             tax={result.nationalInsuranceClass4.total}
           />
@@ -1927,32 +2071,43 @@ function Legend({ color, label, value }: { color: string; label: string; value: 
   );
 }
 
+type ResultTone = "amber" | "rose" | "violet";
+
+// Matches the colours of the key above the results bar: income tax (amber),
+// National Insurance (rose) and Capital Gains Tax (violet).
+const RESULT_TONES: Record<ResultTone, { bar: string; bg: string; title: string; amount: string }> = {
+  amber: { bar: "border-amber-400", bg: "bg-amber-50/60", title: "text-amber-900", amount: "text-amber-900" },
+  rose: { bar: "border-rose-400", bg: "bg-rose-50/60", title: "text-rose-900", amount: "text-rose-900" },
+  violet: { bar: "border-violet-400", bg: "bg-violet-50/60", title: "text-violet-900", amount: "text-violet-900" },
+};
+
 function IncomeSection({
   title,
   subtitle,
   bands,
   tax,
+  tone = "amber",
 }: {
   title: string;
   subtitle?: string;
   bands: BandBreakdown[];
   tax: number;
+  tone?: ResultTone;
 }) {
+  const t = RESULT_TONES[tone];
   return (
-    <div>
-      <div className="mb-2 flex items-baseline justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          {title}
-        </p>
-        <p className="text-sm font-semibold text-slate-800">{GBP.format(tax)}</p>
+    <div className={`rounded-xl border-l-4 p-4 ${t.bar} ${t.bg}`}>
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <p className={`text-base font-bold leading-snug ${t.title}`}>{title}</p>
+        <p className={`shrink-0 text-lg font-bold ${t.amount}`}>{GBP.format(tax)}</p>
       </div>
-      {subtitle && <p className="mb-2 text-xs text-slate-400">{subtitle}</p>}
+      {subtitle && <p className="mb-2 text-xs text-slate-500">{subtitle}</p>}
       {bands.length > 0 && (
         <div className="space-y-1.5">
           {bands.map((b, i) => (
             <div
               key={i}
-              className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
+              className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm"
             >
               <span className="text-slate-500">
                 {PERCENT.format(b.rate)} on {GBP.format(b.taxable)}
