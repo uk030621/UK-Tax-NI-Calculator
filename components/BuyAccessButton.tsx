@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Spinner } from "@/components/Spinner";
 
 export function BuyAccessButton({ priceLabel }: { priceLabel: string }) {
   const [loading, setLoading] = useState(false);
@@ -30,8 +31,9 @@ export function BuyAccessButton({ priceLabel }: { priceLabel: string }) {
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-70"
       >
+        {loading && <Spinner />}
         {loading ? "Redirecting to checkout…" : `Buy access — ${priceLabel}`}
       </button>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

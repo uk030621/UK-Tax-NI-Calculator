@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { Spinner } from "@/components/Spinner";
 import type { CalculationResult, BandBreakdown } from "@/lib/calculateTax";
 
 const GBP = new Intl.NumberFormat("en-GB", {
@@ -1339,8 +1340,9 @@ export function TaxCalculatorForm() {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-60"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-70"
             >
+              {loading && <Spinner />}
               {loading ? "Calculating…" : "Calculate"}
             </button>
             <button
