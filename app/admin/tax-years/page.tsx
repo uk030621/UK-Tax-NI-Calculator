@@ -53,7 +53,7 @@ export default async function AdminTaxYearsPage() {
       <AdminTaxYearForm />
 
       <footer className="mt-12 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} UK Tax &amp; NI Calculator. All rights reserved.
+        © {new Date().getFullYear()} UK Personal Tax Calculator. All rights reserved.
       </footer>
     </main>
   );

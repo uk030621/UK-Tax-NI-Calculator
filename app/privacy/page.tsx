@@ -39,7 +39,7 @@ export default async function PrivacyPolicyPage() {
         {settings.updatedAt
           ? `Last updated: ${new Date(settings.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.`
           : null}{" "}
-        This explains what personal data the UK Tax &amp; NI Calculator
+        This explains what personal data the UK Personal Tax Calculator
         collects, why, and what rights you have over it.
       </p>
 

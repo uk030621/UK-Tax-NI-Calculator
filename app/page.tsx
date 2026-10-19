@@ -64,7 +64,7 @@ export default async function Home({
       <main className="mx-auto min-h-screen px-4 py-10">
         <div className="mx-auto flex max-w-md flex-col items-center text-center">
           <h1 className="font-serif text-3xl text-slate-900">
-            UK Tax &amp; NI Calculator
+            UK Personal Tax Calculator
           </h1>
           <p className="mt-2 text-sm text-slate-500">
             Salary, pension, rental income, a let room, self-employment,
@@ -141,10 +141,10 @@ export default async function Home({
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-6 sm:py-16">
       <header className="mb-6 sm:mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          UK Tax &amp; NI Calculator
+          UK Personal Tax Calculator
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Income tax and National Insurance, by tax year
+          Income tax, National Insurance, savings, dividends and capital gains in one calculation
         </p>
         <div className="mt-3 flex items-center justify-between gap-3">
           <a
@@ -193,7 +193,7 @@ export default async function Home({
             </a>
           </div>
         )}
-        <p className="mt-2">© {new Date().getFullYear()} UK Tax &amp; NI Calculator. All rights reserved.</p>
+        <p className="mt-2">© {new Date().getFullYear()} UK Personal Tax Calculator. All rights reserved.</p>
       </footer>
     </main>
   );

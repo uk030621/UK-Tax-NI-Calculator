@@ -50,4 +50,4 @@ export function getPriceInPence(): number {
 }
 
 export const PRODUCT_NAME =
-  process.env.STRIPE_PRODUCT_NAME || "UK Tax & NI Calculator — lifetime access";
+  process.env.STRIPE_PRODUCT_NAME || "UK Personal Tax Calculator — lifetime access";

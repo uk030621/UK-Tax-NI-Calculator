@@ -1,5 +1,5 @@
 {
-  "name": "UK Tax & NI Calculator",
+  "name": "UK Personal Tax Calculator",
   "short_name": "UK Tax Calc",
   "description": "Calculate UK income tax, National Insurance, and Capital Gains Tax across multiple income types and tax years.",
   "start_url": "/",

@@ -358,7 +358,7 @@ function firstNonFinite(value: unknown, path = "result"): string | null {
 
 async function main() {
   const useDb = process.argv.includes("--db");
-  console.log("UK Tax & NI Calculator — verification");
+  console.log("UK Personal Tax Calculator — verification");
   console.log(`Rate data: ${useDb ? "live MongoDB collection (tax_years)" : "scripts/rates-data.ts"}\n`);
 
   let rows: TaxYearRates[] = fileRates;

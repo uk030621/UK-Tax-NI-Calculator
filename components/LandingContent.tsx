@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { PitchPlayer } from "@/components/PitchPlayer";
+import { PITCH_AUDIO_SRC, PITCH_TRANSCRIPT } from "@/content/pitchTranscript";
 
 interface LandingContentProps {
   priceLabel: string | null;
@@ -77,6 +79,7 @@ const FAQS = [
 export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-16">
+      <PitchPlayer src={PITCH_AUDIO_SRC} transcript={PITCH_TRANSCRIPT} />
       {/* Worked example */}
       {/* Why a multi-income tax year is harder */}
       <section className="mt-14">

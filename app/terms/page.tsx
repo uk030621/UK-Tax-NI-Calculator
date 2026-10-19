@@ -37,8 +37,7 @@ export default async function TermsOfServicePage() {
         {settings.updatedAt
           ? `Last updated: ${new Date(settings.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.`
           : null}{" "}
-        These are the terms you agree to by using the UK Tax &amp; NI
-        Calculator.
+        These are the terms you agree to by using the UK Personal Tax Calculator.
       </p>
 
       {isAdmin && (
@@ -82,7 +81,7 @@ export default async function TermsOfServicePage() {
 
       <Section title="What this is">
         <P>
-          The UK Tax &amp; NI Calculator (&ldquo;the service&rdquo;) is an
+          The UK Personal Tax Calculator (&ldquo;the service&rdquo;) is an
           independent tool that estimates UK Income Tax, National
           Insurance, and Capital Gains Tax based on figures you enter.{" "}
           <strong>

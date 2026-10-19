@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "User guide – UK Tax & NI Calculator",
-  description: "How to use the UK Tax & NI Calculator, field by field, with answers to common questions.",
+  title: "User guide – UK Personal Tax Calculator",
+  description: "How to use the UK Personal Tax Calculator, field by field, with answers to common questions.",
 };
 
 export default async function GuidePage() {

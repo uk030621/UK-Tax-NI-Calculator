@@ -119,7 +119,7 @@ export function AdminSiteSettingsForm() {
               type="text"
               value={data.businessName}
               onChange={(e) => update("businessName", e.target.value)}
-              placeholder="e.g. Jane Smith, trading as UK Tax & NI Calculator"
+              placeholder="e.g. Jane Smith, trading as UK Personal Tax Calculator"
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-base outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
           </Field>

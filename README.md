@@ -1,4 +1,4 @@
-# UK Tax & NI Calculator
+# UK Personal Tax Calculator
 
 Next.js (App Router) app that calculates UK tax across multiple income
 types — employment, pension, self-employment, rental, savings

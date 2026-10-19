@@ -16,7 +16,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "UK Tax & NI Calculator",
+  title: "UK Personal Tax Calculator",
   description:
     "Calculate UK income tax, National Insurance, and Capital Gains Tax across employment, pension, self-employment, rental, savings, dividend, and capital gains income.",
   manifest: "/manifest.json",
