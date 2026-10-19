@@ -22,7 +22,7 @@ export function AuthButton() {
           signOut();
         }}
         disabled={busy !== null}
-        className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-70"
+        className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-70"
       >
         {busy === "out" ? (
           <Spinner className="h-4 w-4" />

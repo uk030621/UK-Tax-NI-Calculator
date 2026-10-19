@@ -138,20 +138,27 @@ export default async function Home({
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-10 sm:py-16">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-6 sm:py-16">
+      <header className="mb-6 sm:mb-8">
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="min-w-0 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
             UK Tax &amp; NI Calculator
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Income tax and National Insurance, by tax year
-          </p>
-          <a href="/guide" className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 px-3.5 py-1.5 text-sm font-medium text-brand-700 transition hover:bg-brand-100">
-            <span aria-hidden="true">📖</span> User guide: how to use each section
-          </a>
+          <div className="shrink-0">
+            <AuthButton />
+          </div>
         </div>
-        <AuthButton />
+        <p className="mt-1 text-sm text-slate-500">
+          Income tax and National Insurance, by tax year
+        </p>
+        <a
+          href="/guide"
+          className="mt-3 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-brand-100 bg-brand-50 px-3.5 py-1.5 text-sm font-medium text-brand-700 transition hover:bg-brand-100"
+        >
+          <span aria-hidden="true">📖</span>
+          <span className="sm:hidden">User guide</span>
+          <span className="hidden sm:inline">User guide: how to use each section</span>
+        </a>
       </header>
 
       <TaxCalculatorForm />

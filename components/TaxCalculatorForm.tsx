@@ -586,7 +586,7 @@ export function TaxCalculatorForm() {
     <div className="space-y-6">
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+        className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-6 shadow-sm"
       >
         <div className="space-y-5">
           {editingId && (
@@ -693,7 +693,7 @@ export function TaxCalculatorForm() {
           )}
 
           <CategoryCard tone="setup" icon="📅" title="Tax year and region">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 Tax year
@@ -722,7 +722,7 @@ export function TaxCalculatorForm() {
                     type="button"
                     key={r}
                     onClick={() => setRegion(r)}
-                    className={`flex-1 rounded-lg py-1.5 text-sm font-medium capitalize transition ${
+                    className={`flex-1 rounded-lg py-1.5 text-sm font-medium whitespace-nowrap transition ${
                       region === r
                         ? "bg-white text-brand-700 shadow-sm"
                         : "text-slate-500 hover:text-slate-700"
@@ -1404,7 +1404,7 @@ function SavedCalculationsList({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
       <p className="mb-4 text-sm font-semibold text-slate-800">Your saved calculations</p>
       <div className="space-y-2">
         {entries.map((entry) => {
@@ -1674,7 +1674,7 @@ function ResultCard({ result }: { result: CalculationResult }) {
   const otherPct = share(otherDeductions);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
       <div className="mb-5 flex items-baseline justify-between">
         <div>
           <p className="text-sm text-slate-500">Take-home / net position</p>
