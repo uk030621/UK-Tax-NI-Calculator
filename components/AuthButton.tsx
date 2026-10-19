@@ -49,7 +49,7 @@ export function AuthButton() {
       className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-80"
     >
       {busy === "in" && <Spinner />}
-      {busy === "in" ? "Taking you to Google…" : "Sign in with Google"}
+      {busy === "in" ? "Signing you in…" : "Sign in with Google"}
     </button>
   );
 }
