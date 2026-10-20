@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/Spinner";
+import { TaxCodeCheck } from "@/components/TaxCodeCheck";
 import type { CalculationResult, BandBreakdown } from "@/lib/calculateTax";
 
 const GBP = new Intl.NumberFormat("en-GB", {
@@ -47,6 +48,9 @@ const BUSINESS_EXPENSE_CATEGORIES = [
 ] as const;
 
 type Region = "uk" | "scotland";
+// Wales has the same income tax rates as England, so calculations use "uk";
+// the choice only affects the tax code prefix (C).
+type RegionChoice = Region | "wales";
 
 interface IncomeFields {
   employmentIncome: string;
@@ -190,7 +194,11 @@ export function TaxCalculatorForm() {
 
   const [years, setYears] = useState<string[]>([]);
   const [taxYear, setTaxYear] = useState<string>("");
-  const [region, setRegion] = useState<Region>("uk");
+  const [regionChoice, setRegionChoice] = useState<RegionChoice>("uk");
+  // Remembers whether the CURRENT result was calculated for Wales, so changing
+  // the region buttons afterwards does not alter a result already on screen.
+  const [resultWelsh, setResultWelsh] = useState(false);
+  const region: Region = regionChoice === "scotland" ? "scotland" : "uk";
   const [income, setIncome] = useState<IncomeFields>(emptyIncome);
   // Whether the pension contribution field below holds the amount the
   // user actually paid ("net") or the total already including the 20%
@@ -370,7 +378,7 @@ export function TaxCalculatorForm() {
     setGivingMarriageAllowance(Boolean(entry.marriageAllowance?.giving));
     setCarryForwardAppliedFrom(null); // the saved entry's own figures replace any filled in from last year
     if (entry.taxYear) setTaxYear(entry.taxYear);
-    if (entry.region) setRegion(entry.region);
+    if (entry.region) setRegionChoice(entry.region);
     if (
       entry.nonSavings?.pensionGross ||
       entry.nonSavings?.rentalGross ||
@@ -560,6 +568,7 @@ export function TaxCalculatorForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Calculation failed");
       setResult(data);
+      setResultWelsh(regionChoice === "wales");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setResult(null);
@@ -717,18 +726,18 @@ export function TaxCalculatorForm() {
                 Region
               </label>
               <div className="flex rounded-xl border border-slate-200 bg-slate-50 p-1">
-                {(["uk", "scotland"] as Region[]).map((r) => (
+                {(["uk", "wales", "scotland"] as RegionChoice[]).map((r) => (
                   <button
                     type="button"
                     key={r}
-                    onClick={() => setRegion(r)}
+                    onClick={() => setRegionChoice(r)}
                     className={`flex-1 rounded-lg py-1.5 text-sm font-medium whitespace-nowrap transition ${
-                      region === r
+                      regionChoice === r
                         ? "bg-white text-brand-700 shadow-sm"
                         : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    {r === "uk" ? "Rest of UK" : "Scotland"}
+                    {r === "uk" ? "England & NI" : r === "wales" ? "Wales" : "Scotland"}
                   </button>
                 ))}
               </div>
@@ -1351,7 +1360,7 @@ export function TaxCalculatorForm() {
         </div>
       </form>
 
-      {result && <ResultCard result={result} />}
+      {result && <ResultCard result={result} welsh={resultWelsh} />}
 
       {result && (
         <div className="text-center">
@@ -1649,7 +1658,7 @@ function MoneyField({
   );
 }
 
-function ResultCard({ result }: { result: CalculationResult }) {
+function ResultCard({ result, welsh }: { result: CalculationResult; welsh: boolean }) {
   // The bar's total is income plus gains *after this year's capital
   // losses* — the same base the net figure is calculated from — so that
   // net + income tax + NI + CGT + the other deductions below add up to
@@ -1962,6 +1971,8 @@ function ResultCard({ result }: { result: CalculationResult }) {
           </div>
         )}
       </div>
+
+      <TaxCodeCheck result={result} welsh={welsh} />
 
       <p className="mt-5 text-xs text-slate-400">
         Personal allowance applied: {GBP.format(result.personalAllowance)}

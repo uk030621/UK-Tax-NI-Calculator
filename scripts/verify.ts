@@ -26,6 +26,7 @@ import {
   type MultiIncomeInput,
   type TaxYearRates,
 } from "../lib/calculateTax";
+import { compareTaxCodes, estimateTaxCode, parseTaxCode, type TaxCodeInput } from "../lib/taxCode";
 import { taxYears as fileRates } from "./rates-data";
 
 type Region = "uk" | "scotland";
@@ -333,6 +334,44 @@ function runChecks(rows: TaxYearRates[]) {
   }
   const empty = run({});
   expectNumber("Empty input produces a zero result", Math.abs(empty.netIncome) + Math.abs(empty.totalDeductions), 0);
+  section("Tax code estimate (PAYE codes: allowance ÷ 10, plus a letter)");
+  const codeFor = (r: CalculationResult, extra: Partial<TaxCodeInput> = {}) =>
+    estimateTaxCode({
+      region: r.region,
+      allowance: r.personalAllowance,
+      receivingMarriageAllowance: r.marriageAllowance.requested,
+      givingMarriageAllowance: r.marriageAllowance.giving,
+      benefitsInKind: 0,
+      untaxedIncome: 0,
+      underpaidTax: 0,
+      marginalRate: 0.2,
+      ...extra,
+    }).code;
+  const expectText = (label: string, got: string, want: string) => {
+    const ok = got === want;
+    currentSection!.results.push({ ok, label, detail: ok ? got : `got ${got}, expected ${want}` });
+  };
+  expectText("Standard code, rest of UK", codeFor(run({ employmentIncome: 30000 })), "1257L");
+  expectText("Standard code, Scotland (S prefix)", codeFor(run({ employmentIncome: 30000 }, sc)), "S1257L");
+  expectText("Marriage Allowance recipient: £13,830 allowance", codeFor(run({ employmentIncome: 30000, receivingMarriageAllowance: true })), "1383M");
+  expectText("Marriage Allowance giver: £11,310 allowance", codeFor(run({ employmentIncome: 11000, givingMarriageAllowance: true })), "1131N");
+  expectText("£3,000 benefit in kind reduces the code", codeFor(run({ employmentIncome: 30000 }), { benefitsInKind: 3000 }), "957L");
+  expectText("£300 underpaid tax at 20% = £1,500 allowance", codeFor(run({ employmentIncome: 30000 }), { underpaidTax: 300 }), "1107L");
+  expectText("Deductions above the allowance give a K code", codeFor(run({ employmentIncome: 30000 }), { benefitsInKind: 13000 }), "K43");
+  expectText("Income £125,140+ (no allowance) gives 0T", codeFor(run({ employmentIncome: 150000 })), "0T");
+  expectText("State Pension £11,973 collected through another pension's code: £597 left = 59L", codeFor(run({ pensionIncome: 20000 }), { statePension: 11973 }), "59L");
+  const std = estimateTaxCode({ region: "uk", allowance: 12570, receivingMarriageAllowance: false, givingMarriageAllowance: false, benefitsInKind: 0, untaxedIncome: 0, underpaidTax: 0, marginalRate: 0.2 });
+  expectText("Parses S1257L with spaces and case", String(parseTaxCode(" s1257 l ")?.number), "1257");
+  expectText("Parses an emergency suffix (1257L W1)", String(parseTaxCode("1257L W1")?.letter), "L");
+  const welshStd = estimateTaxCode({ region: "wales", allowance: 12570, receivingMarriageAllowance: false, givingMarriageAllowance: false, benefitsInKind: 0, untaxedIncome: 0, underpaidTax: 0, marginalRate: 0.2 });
+  expectText("Wales: standard code carries a C prefix", welshStd.code, "C1257L");
+  expectText("Wales: C1257L matches", compareTaxCodes("C1257L", welshStd, "wales", 0.2).status, "match");
+  expectText("Wales: an unprefixed code is flagged", compareTaxCodes("1257L", welshStd, "wales", 0.2).status, "different");
+  expectText("England: a C-prefix code is flagged", compareTaxCodes("C1257L", std, "uk", 0.2).status, "different");
+  expectText("Rejects a nonsense code", String(parseTaxCode("hello")), "null");
+  expectText("Matching code reports a match", compareTaxCodes("1257L", std, "uk", 0.2).status, "match");
+  expectText("1190L is flagged as lower, £134 a year", compareTaxCodes("1190L", std, "uk", 0.2).status + ":" + compareTaxCodes("1190L", std, "uk", 0.2).yearlyTaxEffect, "lower:134");
+  expectText("Missing S prefix is not reported as a match", compareTaxCodes("1257L", estimateTaxCode({ region: "scotland", allowance: 12570, receivingMarriageAllowance: false, givingMarriageAllowance: false, benefitsInKind: 0, untaxedIncome: 0, underpaidTax: 0, marginalRate: 0.2 }), "scotland", 0.2).status, "different");
 }
 
 /** Returns the path of the first NaN/Infinity/undefined number found, or null. */
@@ -350,6 +389,7 @@ function firstNonFinite(value: unknown, path = "result"): string | null {
     }
   }
   return null;
+
 }
 
 // ---------------------------------------------------------------------------

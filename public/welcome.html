@@ -113,9 +113,9 @@
     color: var(--body);
   }
   .pitch { margin-top: 28px; max-width: 520px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 14px 16px; }
-  .pitch-row { display: flex; align-items: center; gap: 14px; }
-  .pitch-btn { flex: none; width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  .pitch-btn svg { width: 22px; height: 22px; fill: currentColor; }
+  .pitch-row { display: flex; align-items: center; gap: 12px; }
+  .pitch-btn { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .pitch-btn svg { width: 18px; height: 18px; fill: currentColor; }
   .pitch-btn:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
   .pitch-title { margin: 0; font-weight: 700; font-size: 15px; }
   .pitch-bar { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
@@ -307,17 +307,18 @@
               <p class="pitch-title">Hear how it works</p>
               <div class="pitch-bar">
                 <input type="range" id="pitch-seek" min="0" max="1" step="1" value="0" disabled aria-label="Position in the audio overview">
-                <span class="pitch-time" id="pitch-time">0:48</span>
+                <span class="pitch-time" id="pitch-time">1:19</span>
               </div>
             </div>
           </div>
           <p class="pitch-err" id="pitch-err" role="alert" hidden>The audio couldn't be played. You can read the transcript instead.</p>
-          <audio id="pitch-audio" src="/audio/pitch-v2.mp3" preload="none"></audio>
+          <audio id="pitch-audio" src="/audio/pitch-v3.mp3" preload="none"></audio>
           <details>
             <summary>Read the transcript instead</summary>
             <p>Real tax situations are rarely just a salary. The UK Personal Tax Calculator is built for the messier ones.</p>
-            <p>Enter your salary, pension, rental income, self-employment, savings, dividends and capital gains, and it works them out together, in the order HM Revenue and Customs applies them, for the tax year and region you choose, including Scotland.</p>
+            <p>Enter your salary, pension, rental income, self-employment, savings, dividends and capital gains, and it works them out together, in the order HM Revenue and Customs applies them, for the tax year and region you choose, including Scotland and Wales.</p>
             <p>It handles the details that are easy to get wrong: landlords' expenses and mortgage interest relief, letting a room in your own home, losses carried forward, student loan repayments, Marriage Allowance, and the Child Benefit charge.</p>
+            <p>It even estimates your tax code, so you can compare it with the one HM Revenue and Customs gave you, and see why they might differ.</p>
             <p>The calculations are checked against published examples from HM Revenue and Customs, the Scottish Government, and the Low Incomes Tax Reform Group.</p>
             <p>And it is clear about its limits, with a panel that says when it is time to speak to an accountant.</p>
             <p>Sign in, pay once, and use it for every tax year it supports.</p>

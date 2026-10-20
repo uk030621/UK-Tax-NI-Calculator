@@ -41,22 +41,22 @@ export function PitchPlayer({ src, transcript }: { src: string; transcript: stri
       aria-label="Audio overview"
       className="mt-8 rounded-2xl border border-brand-100 bg-brand-50 p-4 sm:p-5"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={toggle}
           aria-label={playing ? "Pause the audio overview" : "Play the audio overview"}
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm transition hover:bg-brand-600"
+          className="flex h-10 w-10 shrink-0 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm transition hover:bg-brand-600"
         >
           {waiting ? (
-            <Spinner className="h-6 w-6" />
+            <Spinner className="h-4 w-4 sm:h-5 sm:w-5" />
           ) : playing ? (
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" aria-hidden="true">
               <rect x="6" y="5" width="4" height="14" rx="1" />
               <rect x="14" y="5" width="4" height="14" rx="1" />
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" aria-hidden="true">
               <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" />
             </svg>
           )}
@@ -81,7 +81,7 @@ export function PitchPlayer({ src, transcript }: { src: string; transcript: stri
               className="h-2 w-full min-w-0 cursor-pointer accent-brand-500 disabled:cursor-default"
             />
             <span className="shrink-0 text-xs font-medium tabular-nums text-slate-500">
-              {duration ? `${formatTime(current)} / ${formatTime(duration)}` : "0:48"}
+              {duration ? `${formatTime(current)} / ${formatTime(duration)}` : "1:19"}
             </span>
           </div>
         </div>
