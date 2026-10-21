@@ -1,3 +1,12 @@
+import {
+  calculateVehicleAllowance,
+  simplifiedMileageExpense,
+  type MileageResult,
+  type VehicleAllowanceResult,
+  type VehicleInput,
+  type VehicleRates,
+} from "./vehicleAllowances";
+
 export interface TaxBand {
   threshold: number;
   rate: number;
@@ -149,6 +158,14 @@ export interface TaxYearRates {
     reliefRate: number;
   };
 
+  /**
+   * Vehicle costs for the self-employed (simplified mileage rates and
+   * capital allowances for one vehicle). Optional, so tax-year documents
+   * saved before it existed keep working. If it's missing, vehicle inputs
+   * are ignored and the results say so.
+   */
+  vehicles?: VehicleRates;
+
   updatedAt?: Date;
 }
 
@@ -182,6 +199,12 @@ export interface MultiIncomeInput {
   selfEmploymentProfit?: number;
   selfEmploymentExpenses?: RentalExpenseItem[];
   selfEmploymentLossBroughtForward?: number; // per ITA07/s83: relieved against this year's trading profit first
+  /** Business miles in a car or van, claimed at the flat simplified-expenses rates. Don't combine with capital allowances for the same vehicle. */
+  businessMilesCarVan?: number;
+  /** Business miles on a motorcycle, at the flat simplified-expenses rate. */
+  businessMilesMotorcycle?: number;
+  /** Capital allowances for one vehicle. See lib/vehicleAllowances.ts for what is and isn't modelled. */
+  vehicleAllowance?: VehicleInput;
   savingsInterest?: number;
   dividendIncome?: number;
   foreignTaxWithheldOnDividends?: number;
@@ -405,6 +428,17 @@ export interface CalculationResult {
     /** Reduction that exceeded the tax due. It can be transferred to a spouse or civil partner. */
     unusedReduction: number;
   };
+
+  vehicles: {
+    /** false if the tax year's rates have no vehicle figures, so nothing vehicle-related was applied. */
+    available: boolean;
+    /** True if the user entered any vehicle information. */
+    used: boolean;
+    mileage: MileageResult;
+    allowance: VehicleAllowanceResult | null;
+    /** Echo of what was entered, so a saved calculation can be reopened. */
+    input: { carVanMiles: number; motorcycleMiles: number; allowance: VehicleInput | null };
+  };
 }
 
 /** £1 of personal allowance lost per £2 of income over £100,000. */
@@ -506,7 +540,18 @@ export function calculateMultiIncomeTax(
   const employmentIncome = Math.max(0, input.employmentIncome ?? 0);
   const pensionIncome = Math.max(0, input.pensionIncome ?? 0);
   const rentalIncomeGross = Math.max(0, input.rentalIncome ?? 0);
-  const selfEmploymentProfitGross = Math.max(0, input.selfEmploymentProfit ?? 0);
+  // Vehicle costs (self-employment only): flat mileage rates and/or capital
+  // allowances for one vehicle. Both become business expenses. A balancing
+  // charge (selling for more than the remaining value) is extra business income.
+  const vehicleRates = rates.vehicles;
+  const vehiclesAvailable = Boolean(vehicleRates);
+  const mileage: MileageResult = vehicleRates
+    ? simplifiedMileageExpense(input.businessMilesCarVan ?? 0, input.businessMilesMotorcycle ?? 0, vehicleRates)
+    : { carVanMiles: 0, motorcycleMiles: 0, expense: 0 };
+  const vehicleAllowanceResult: VehicleAllowanceResult | null =
+    vehicleRates && input.vehicleAllowance ? calculateVehicleAllowance(input.vehicleAllowance, vehicleRates) : null;
+  const vehicleBalancingCharge = vehicleAllowanceResult?.balancingCharge ?? 0;
+  const selfEmploymentProfitGross = Math.max(0, input.selfEmploymentProfit ?? 0) + vehicleBalancingCharge;
   const savingsInterest = Math.max(0, input.savingsInterest ?? 0);
   const dividendIncome = Math.max(0, input.dividendIncome ?? 0);
   const foreignTaxWithheldOnDividends = Math.max(0, input.foreignTaxWithheldOnDividends ?? 0);
@@ -650,10 +695,10 @@ export function calculateMultiIncomeTax(
   // --- Self-employment: same allowance-vs-itemised-expenses pattern as
   // rental, but with the £1,000 trading allowance instead of the
   // property allowance, and no mortgage-interest-style special case.
-  const selfEmploymentExpensesTotal = (input.selfEmploymentExpenses ?? []).reduce(
-    (sum, item) => sum + Math.max(0, item.amount || 0),
-    0
-  );
+  const selfEmploymentExpensesTotal =
+    (input.selfEmploymentExpenses ?? []).reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0) +
+    mileage.expense +
+    (vehicleAllowanceResult?.allowanceClaimed ?? 0);
   const useItemizedSelfEmploymentExpenses =
     selfEmploymentExpensesTotal > rates.tradingAllowance;
   // Same fix as rental: the £1,000 trading allowance can't exceed income
@@ -1205,6 +1250,21 @@ export function calculateMultiIncomeTax(
       taxReduction: mcaReduction,
       taxReductionApplied: mcaApplied,
       unusedReduction: mcaReduction - mcaApplied,
+    },
+
+    vehicles: {
+      available: vehiclesAvailable,
+      used:
+        (input.businessMilesCarVan ?? 0) > 0 ||
+        (input.businessMilesMotorcycle ?? 0) > 0 ||
+        Boolean(input.vehicleAllowance),
+      mileage,
+      allowance: vehicleAllowanceResult,
+      input: {
+        carVanMiles: Math.max(0, input.businessMilesCarVan ?? 0),
+        motorcycleMiles: Math.max(0, input.businessMilesMotorcycle ?? 0),
+        allowance: input.vehicleAllowance ?? null,
+      },
     },
   };
 

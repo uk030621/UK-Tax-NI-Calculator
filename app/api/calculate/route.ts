@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
     blindPersonsAllowance,
     blindPersonsAllowanceTransferredIn,
     claimingMarriedCouplesAllowance,
+    businessMilesCarVan,
+    businessMilesMotorcycle,
+    vehicleAllowance,
   } = body;
 
   if (!taxYear || (region !== "uk" && region !== "scotland")) {
@@ -106,6 +109,31 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Vehicle capital allowances: one vehicle, validated field by field.
+  if (vehicleAllowance !== undefined && vehicleAllowance !== null) {
+    const v = vehicleAllowance as unknown as Record<string, unknown>;
+    const bad = (msg: string) => NextResponse.json({ error: msg }, { status: 400 });
+    if (typeof v !== "object") return bad("vehicleAllowance must be an object");
+    if (!["car", "van", "motorcycle"].includes(v.type as string)) return bad("vehicleAllowance.type must be car, van or motorcycle");
+    if (
+      typeof v.businessUsePercent !== "number" ||
+      Number.isNaN(v.businessUsePercent) ||
+      v.businessUsePercent < 0 ||
+      v.businessUsePercent > 100
+    ) {
+      return bad("vehicleAllowance.businessUsePercent must be a number from 0 to 100");
+    }
+    for (const key of ["costThisYear", "poolBroughtForward", "saleProceeds"] as const) {
+      if (v[key] !== undefined && !isValidAmount(v[key])) return bad(`vehicleAllowance.${key} must be a non-negative number`);
+    }
+    if (v.condition !== undefined && !["new", "secondhand"].includes(v.condition as string)) return bad("vehicleAllowance.condition must be new or secondhand");
+    if (v.co2Band !== undefined && !["zero", "upto50", "over50"].includes(v.co2Band as string)) return bad("vehicleAllowance.co2Band must be zero, upto50 or over50");
+    if (v.poolType !== undefined && !["main", "special"].includes(v.poolType as string)) return bad("vehicleAllowance.poolType must be main or special");
+    if (((v.costThisYear as number) ?? 0) > 0 && ((v.poolBroughtForward as number) ?? 0) > 0) {
+      return bad("Enter either the cost of a vehicle bought this year or a value brought forward, not both");
+    }
+  }
+
   const amounts = {
     employmentIncome,
     pensionIncome,
@@ -127,6 +155,8 @@ export async function POST(request: NextRequest) {
     mainResidenceGain,
     childBenefitReceived,
     blindPersonsAllowanceTransferredIn,
+    businessMilesCarVan,
+    businessMilesMotorcycle,
   };
   for (const [key, value] of Object.entries(amounts)) {
     if (value !== undefined && !isValidAmount(value)) {
@@ -199,6 +229,7 @@ export async function POST(request: NextRequest) {
       givingMarriageAllowance,
       blindPersonsAllowance,
       claimingMarriedCouplesAllowance,
+      vehicleAllowance: vehicleAllowance ?? undefined,
     },
     rates
   );

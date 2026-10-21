@@ -78,6 +78,22 @@ const marriageAllowanceTransferable = 1260;
 // Blind Person's Allowance (extra tax-free amount) and Married Couple's
 // Allowance (only where one partner was born before 6 April 1935; a 10% tax
 // reduction). Figures per GOV.UK / LITRG.
+const vehicles2025 = {
+  mainPoolRate: 0.18,
+  specialRatePoolRate: 0.06,
+  co2Threshold: 50,
+  smallPoolLimit: 1000,
+  annualInvestmentAllowance: 1_000_000,
+  zeroEmissionFirstYearAllowance: true, // 100% FYA for new zero-emission cars until 5 April 2027
+  mileage: { carVanFirstMilesLimit: 10000, carVanFirstRate: 0.45, carVanRate: 0.25, motorcycleRate: 0.24 },
+};
+// Main pool writing-down allowance fell from 18% to 14% on 6 April 2026; the
+// flat mileage rate for the first 10,000 business miles rose from 45p to 55p.
+const vehicles2026 = {
+  ...vehicles2025,
+  mainPoolRate: 0.14,
+  mileage: { carVanFirstMilesLimit: 10000, carVanFirstRate: 0.55, carVanRate: 0.25, motorcycleRate: 0.24 },
+};
 const blindPersonsAllowance2025 = 3130;
 const blindPersonsAllowance2026 = 3250;
 const marriedCouplesAllowance2025 = { maximum: 11270, minimum: 4360, incomeLimit: 37700, reliefRate: 0.1 };
@@ -164,6 +180,7 @@ export const taxYears: TaxYearRates[] = [
     marriageAllowanceTransferable,
     blindPersonsAllowance: blindPersonsAllowance2025,
     marriedCouplesAllowance: marriedCouplesAllowance2025,
+    vehicles: vehicles2025,
     updatedAt: new Date(),
   },
   {
@@ -192,6 +209,7 @@ export const taxYears: TaxYearRates[] = [
     marriageAllowanceTransferable,
     blindPersonsAllowance: blindPersonsAllowance2025,
     marriedCouplesAllowance: marriedCouplesAllowance2025,
+    vehicles: vehicles2025,
     updatedAt: new Date(),
   },
   // 2026/27 — dividend rates rose 2pp at the basic/higher bands (Autumn Budget 2025)
@@ -221,6 +239,7 @@ export const taxYears: TaxYearRates[] = [
     marriageAllowanceTransferable,
     blindPersonsAllowance: blindPersonsAllowance2026,
     marriedCouplesAllowance: marriedCouplesAllowance2026,
+    vehicles: vehicles2026,
     updatedAt: new Date(),
   },
   {
@@ -249,6 +268,7 @@ export const taxYears: TaxYearRates[] = [
     marriageAllowanceTransferable,
     blindPersonsAllowance: blindPersonsAllowance2026,
     marriedCouplesAllowance: marriedCouplesAllowance2026,
+    vehicles: vehicles2026,
     updatedAt: new Date(),
   },
 ];

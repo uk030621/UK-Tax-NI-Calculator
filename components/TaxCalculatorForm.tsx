@@ -152,6 +152,22 @@ interface HistoryEntry {
   marriageAllowance?: { requested?: boolean; giving?: boolean };
   blindPersonsAllowance?: { ownAmount?: number; transferredIn?: number };
   marriedCouplesAllowance?: { claimed?: boolean };
+  vehicles?: {
+    input?: {
+      carVanMiles?: number;
+      motorcycleMiles?: number;
+      allowance?: {
+        type?: "car" | "van" | "motorcycle";
+        businessUsePercent?: number;
+        costThisYear?: number;
+        condition?: "new" | "secondhand";
+        co2Band?: "zero" | "upto50" | "over50";
+        poolBroughtForward?: number;
+        poolType?: "main" | "special";
+        saleProceeds?: number;
+      } | null;
+    };
+  };
   netIncome?: number;
   taxYear?: string;
   region?: Region;
@@ -239,6 +255,18 @@ export function TaxCalculatorForm() {
   const [blindPersonsAllowance, setBlindPersonsAllowance] = useState(false);
   const [bpaTransferredIn, setBpaTransferredIn] = useState("");
   const [claimingMarriedCouplesAllowance, setClaimingMarriedCouplesAllowance] = useState(false);
+  const [showVehicleCosts, setShowVehicleCosts] = useState(false);
+  const [milesCarVan, setMilesCarVan] = useState("");
+  const [milesMotorcycle, setMilesMotorcycle] = useState("");
+  const [vehicleMode, setVehicleMode] = useState<"none" | "this" | "earlier">("none");
+  const [vehicleType, setVehicleType] = useState<"car" | "van" | "motorcycle">("car");
+  const [vehicleBusinessUse, setVehicleBusinessUse] = useState("100");
+  const [vehicleCost, setVehicleCost] = useState("");
+  const [vehicleCondition, setVehicleCondition] = useState<"new" | "secondhand">("new");
+  const [vehicleCo2, setVehicleCo2] = useState<"zero" | "upto50" | "over50">("over50");
+  const [vehiclePoolBF, setVehiclePoolBF] = useState("");
+  const [vehiclePoolType, setVehiclePoolType] = useState<"main" | "special">("main");
+  const [vehicleSale, setVehicleSale] = useState("");
   // Carry-forward offer: which saved calculation the user picked, whether
   // they've applied it (we then show where the figures came from, with an
   // Undo), and whether they've dismissed the offer for this tax year.
@@ -385,6 +413,22 @@ export function TaxCalculatorForm() {
     setBlindPersonsAllowance(Boolean(entry.blindPersonsAllowance?.ownAmount));
     setBpaTransferredIn(entry.blindPersonsAllowance?.transferredIn ? String(entry.blindPersonsAllowance.transferredIn) : "");
     setClaimingMarriedCouplesAllowance(Boolean(entry.marriedCouplesAllowance?.claimed));
+    {
+      const v = entry.vehicles?.input;
+      const a = v?.allowance;
+      setMilesCarVan(v?.carVanMiles ? String(v.carVanMiles) : "");
+      setMilesMotorcycle(v?.motorcycleMiles ? String(v.motorcycleMiles) : "");
+      setVehicleMode(a ? ((a.poolBroughtForward ?? 0) > 0 ? "earlier" : "this") : "none");
+      setVehicleType(a?.type ?? "car");
+      setVehicleBusinessUse(String(a?.businessUsePercent ?? 100));
+      setVehicleCost(a?.costThisYear ? String(a.costThisYear) : "");
+      setVehicleCondition(a?.condition ?? "new");
+      setVehicleCo2(a?.co2Band ?? "over50");
+      setVehiclePoolBF(a?.poolBroughtForward ? String(a.poolBroughtForward) : "");
+      setVehiclePoolType(a?.poolType ?? "main");
+      setVehicleSale(a?.saleProceeds ? String(a.saleProceeds) : "");
+      setShowVehicleCosts(Boolean(a || v?.carVanMiles || v?.motorcycleMiles));
+    }
     setCarryForwardAppliedFrom(null); // the saved entry's own figures replace any filled in from last year
     if (entry.taxYear) setTaxYear(entry.taxYear);
     if (entry.region) setRegionChoice(entry.region);
@@ -433,6 +477,18 @@ export function TaxCalculatorForm() {
     setBlindPersonsAllowance(false);
     setBpaTransferredIn("");
     setClaimingMarriedCouplesAllowance(false);
+    setShowVehicleCosts(false);
+    setMilesCarVan("");
+    setMilesMotorcycle("");
+    setVehicleMode("none");
+    setVehicleType("car");
+    setVehicleBusinessUse("100");
+    setVehicleCost("");
+    setVehicleCondition("new");
+    setVehicleCo2("over50");
+    setVehiclePoolBF("");
+    setVehiclePoolType("main");
+    setVehicleSale("");
     setCardResetCount((c) => c + 1);
     setCarryForwardAppliedFrom(null);
     setShowOtherIncome(false);
@@ -459,7 +515,10 @@ export function TaxCalculatorForm() {
     givingMarriageAllowance ||
     blindPersonsAllowance ||
     bpaTransferredIn !== "" ||
-    claimingMarriedCouplesAllowance;
+    claimingMarriedCouplesAllowance ||
+    milesCarVan !== "" ||
+    milesMotorcycle !== "" ||
+    vehicleMode !== "none";
 
   function handleClearAll() {
     if (formHasInput) {
@@ -575,6 +634,21 @@ export function TaxCalculatorForm() {
       blindPersonsAllowance,
       blindPersonsAllowanceTransferredIn: Number(bpaTransferredIn) || 0,
       claimingMarriedCouplesAllowance,
+      businessMilesCarVan: Number(milesCarVan) || 0,
+      businessMilesMotorcycle: Number(milesMotorcycle) || 0,
+      vehicleAllowance:
+        vehicleMode === "none"
+          ? undefined
+          : {
+              type: vehicleType,
+              businessUsePercent: vehicleBusinessUse === "" ? 100 : Number(vehicleBusinessUse),
+              costThisYear: vehicleMode === "this" ? Number(vehicleCost) || 0 : undefined,
+              condition: vehicleMode === "this" ? vehicleCondition : undefined,
+              co2Band: vehicleType === "car" ? vehicleCo2 : undefined,
+              poolBroughtForward: vehicleMode === "earlier" ? Number(vehiclePoolBF) || 0 : undefined,
+              poolType: vehicleMode === "earlier" ? vehiclePoolType : undefined,
+              saleProceeds: Number(vehicleSale) || undefined,
+            },
     };
 
     setLoading(true);
@@ -1141,7 +1215,7 @@ export function TaxCalculatorForm() {
                 </p>
               </CategoryCard>
 
-              <CategoryCard tone="income" icon="🛠️" title="Self-employment" collapsible hasData={filled(income.selfEmploymentProfit, income.selfEmploymentLossBroughtForward) || anyFilled(businessExpenses)} badge={money(income.selfEmploymentProfit)}>
+              <CategoryCard tone="income" icon="🛠️" title="Self-employment" collapsible hasData={filled(income.selfEmploymentProfit, income.selfEmploymentLossBroughtForward) || anyFilled(businessExpenses) || milesCarVan !== "" || milesMotorcycle !== "" || vehicleMode !== "none"} badge={money(income.selfEmploymentProfit)}>
                 <MoneyField
                   label="Self-employment income (before expenses/allowance)"
                   value={income.selfEmploymentProfit}
@@ -1188,6 +1262,184 @@ export function TaxCalculatorForm() {
                       Same rule as rental — whichever is worth more (this total
                       or the £1,000 trading allowance) is used automatically.
                     </p>
+                  </div>
+                )}
+
+
+                <button
+                  type="button"
+                  onClick={() => setShowVehicleCosts((v) => !v)}
+                  className="mt-2 block text-xs font-medium text-brand-600 hover:text-brand-700"
+                >
+                  {showVehicleCosts
+                    ? "− Hide vehicle costs"
+                    : "+ Vehicle costs: mileage or capital allowances (car, van or motorcycle)"}
+                </button>
+
+                {showVehicleCosts && (
+                  <div className="mt-3 space-y-4 rounded-lg border border-slate-200 bg-white p-3">
+                    <p className="text-sm text-slate-600">
+                      For a vehicle you use for work, choose <strong>one</strong> method per vehicle: flat mileage
+                      rates, or capital allowances. You can&apos;t claim both on the same vehicle. Either way the
+                      amount is added to your business expenses automatically, so you don&apos;t need to enter it in
+                      the list above.
+                    </p>
+
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Option 1: flat mileage rates</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        A set rate per business mile covers the running costs and wear and tear. Cars and vans have one
+                        rate for the first 10,000 miles and a lower one after that. Motorcycles have a single rate.
+                        The rates for each tax year are applied for you.
+                      </p>
+                      <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                            Business miles in a car or van
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={milesCarVan}
+                            onChange={(e) => setMilesCarVan(e.target.value)}
+                            placeholder="e.g. 12,000"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                            Business miles on a motorcycle
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={milesMotorcycle}
+                            onChange={(e) => setMilesMotorcycle(e.target.value)}
+                            placeholder="e.g. 1,000"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-4">
+                      <p className="text-sm font-semibold text-slate-800">Option 2: capital allowances for one vehicle</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Instead of mileage rates, claim the cost of the vehicle itself. This covers one vehicle in one
+                        tax year. Several vehicles, leasing, hire purchase and part-year accounts need an accountant.
+                      </p>
+                      <label className="mb-1.5 mt-2 block text-sm font-medium text-slate-700">
+                        When did you buy it?
+                      </label>
+                      <select
+                        value={vehicleMode}
+                        onChange={(e) => setVehicleMode(e.target.value as "none" | "this" | "earlier")}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+                      >
+                        <option value="none">I&apos;m not claiming capital allowances</option>
+                        <option value="this">I bought it in this tax year</option>
+                        <option value="earlier">I bought it in an earlier year</option>
+                      </select>
+
+                      {vehicleMode !== "none" && (
+                        <div className="mt-3 space-y-3">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div>
+                              <label className="mb-1.5 block text-sm font-medium text-slate-700">Type of vehicle</label>
+                              <select
+                                value={vehicleType}
+                                onChange={(e) => setVehicleType(e.target.value as "car" | "van" | "motorcycle")}
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+                              >
+                                <option value="car">Car</option>
+                                <option value="van">Van or other goods vehicle</option>
+                                <option value="motorcycle">Motorcycle</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                Business use (%)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={vehicleBusinessUse}
+                                onChange={(e) => setVehicleBusinessUse(e.target.value)}
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+                              />
+                            </div>
+                          </div>
+
+                          {vehicleMode === "this" && (
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                              <MoneyField label="Cost of the vehicle" value={vehicleCost} onChange={setVehicleCost} placeholder="e.g. 20,000" />
+                              <div>
+                                <label className="mb-1.5 block text-sm font-medium text-slate-700">New or second-hand?</label>
+                                <select
+                                  value={vehicleCondition}
+                                  onChange={(e) => setVehicleCondition(e.target.value as "new" | "secondhand")}
+                                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+                                >
+                                  <option value="new">New</option>
+                                  <option value="secondhand">Second-hand</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {vehicleType === "car" && vehicleMode === "this" && (
+                            <div>
+                              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                CO2 emissions (from the V5C registration document)
+                              </label>
+                              <select
+                                value={vehicleCo2}
+                                onChange={(e) => setVehicleCo2(e.target.value as "zero" | "upto50" | "over50")}
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+                              >
+                                <option value="zero">0 g/km (fully electric)</option>
+                                <option value="upto50">1 to 50 g/km</option>
+                                <option value="over50">Over 50 g/km</option>
+                              </select>
+                            </div>
+                          )}
+
+                          {vehicleMode === "earlier" && (
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                              <MoneyField
+                                label="Value left to claim at the start of this year"
+                                value={vehiclePoolBF}
+                                onChange={setVehiclePoolBF}
+                                placeholder="e.g. 10,000"
+                              />
+                              <div>
+                                <label className="mb-1.5 block text-sm font-medium text-slate-700">Which pool is it in?</label>
+                                <select
+                                  value={vehiclePoolType}
+                                  onChange={(e) => setVehiclePoolType(e.target.value as "main" | "special")}
+                                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-base text-slate-900 outline-none focus:border-brand-500 focus:bg-white"
+                                >
+                                  <option value="main">Main pool (most vans, motorcycles and lower-emission cars)</option>
+                                  <option value="special">Special rate pool (cars over 50 g/km)</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          <MoneyField
+                            label="Sale proceeds, if you sold it this year (optional)"
+                            value={vehicleSale}
+                            onChange={setVehicleSale}
+                            placeholder="e.g. 9,000"
+                          />
+                          <p className="text-sm text-slate-500">
+                            Your results show the allowance and the value to carry into next year. Keep that figure for
+                            next year&apos;s calculation, in the same way as losses.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -1783,6 +2035,12 @@ function ResultCard({ result, welsh }: { result: CalculationResult; welsh: boole
           {PERCENT.format(result.effectiveTaxRate)} effective rate
         </p>
       </div>
+      {(result.vehicles?.input?.allowance?.costThisYear ?? 0) > 0 && (
+        <p className="-mt-2 mb-5 text-xs text-slate-500">
+          This is your income after tax and National Insurance. It doesn&rsquo;t deduct the{" "}
+          {GBP.format(result.vehicles?.input?.allowance?.costThisYear ?? 0)} spent on the vehicle.
+        </p>
+      )}
 
       <div className="mb-6 flex h-2.5 overflow-hidden rounded-full bg-slate-100">
         <div className="bg-brand-500" style={{ width: `${netPct * 100}%` }} />
@@ -1826,6 +2084,60 @@ function ResultCard({ result, welsh }: { result: CalculationResult; welsh: boole
           <p className="-mt-2 text-xs text-slate-400">
             {selfEmploymentDeductionSubtitle(result.nonSavings)}
           </p>
+        )}
+
+
+        {result.vehicles.used && (
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            {!result.vehicles.available ? (
+              <span className="text-amber-600">
+                ⚠ This tax year has no vehicle figures set up, so your vehicle costs weren&apos;t applied. Please
+                tell the administrator.
+              </span>
+            ) : (
+              <div className="space-y-1.5">
+                {result.vehicles.mileage.expense > 0 && (
+                  <p>
+                    Vehicle mileage: {GBP.format(result.vehicles.mileage.expense)} of business expenses at the flat
+                    rates.
+                  </p>
+                )}
+                {result.vehicles.allowance && result.vehicles.allowance.mode !== "none" && (
+                  <>
+                    {result.vehicles.allowance.allowanceClaimed > 0 && (
+                      <p>
+                        Vehicle capital allowance: {GBP.format(result.vehicles.allowance.allowanceClaimed)} of
+                        business expenses.
+                      </p>
+                    )}
+                    {result.vehicles.allowance.balancingCharge > 0 && (
+                      <p>
+                        Balancing charge: {GBP.format(result.vehicles.allowance.balancingCharge)} added to your
+                        business income.
+                      </p>
+                    )}
+                    {result.vehicles.allowance.poolCarriedForward > 0 && (
+                      <p>
+                        Value left to claim next year: {GBP.format(result.vehicles.allowance.poolCarriedForward)}.
+                        Note this down for next year&apos;s calculation.
+                      </p>
+                    )}
+                    {result.vehicles.allowance.notes.map((n) => (
+                      <p key={n} className="text-slate-500">
+                        {n}
+                      </p>
+                    ))}
+                  </>
+                )}
+                {result.vehicles.mileage.expense > 0 && result.vehicles.allowance && result.vehicles.allowance.mode !== "none" && (
+                  <p className="text-slate-500">
+                    You entered both mileage and capital allowances. Make sure they are for different vehicles,
+                    because you can&apos;t claim both on the same one.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {rentalLossNote(result.nonSavings) && (

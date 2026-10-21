@@ -31,11 +31,11 @@ const EXCLUSIONS: Exclusion[] = [
       "A Chartered Tax Adviser with international experience can confirm what the relevant double-taxation treaty allows — the mechanism varies significantly by country.",
   },
   {
-    topic: "Capital allowances for business vehicles",
+    topic: "Capital allowances beyond a single vehicle",
     whyExcluded:
-      "For most small traders, the £1,000,000 Annual Investment Allowance means equipment purchases already get 100% relief in the year of purchase — which behaves almost identically to the itemised business expenses this app already supports. The genuine gap is business vehicles (particularly cars), which use entirely different CO2-based rates rather than a simple deduction.",
+      "This app works out simplified mileage expenses and capital allowances for one car, van or motorcycle in one tax year. It doesn't handle several vehicles sharing a pool, leased or hire-purchase vehicles, part-year accounting periods, or the Annual Investment Allowance limit being shared with other equipment you buy. Other business equipment (tools, computers, machinery) isn't calculated either. For most small traders the Annual Investment Allowance gives full relief in the year, so you can enter its cost as an itemised expense.",
     advice:
-      "If you've bought a business vehicle, a Chartered Accountant can confirm the correct capital allowance rate — this one is easy to get wrong by assuming it works like an ordinary expense.",
+      "If you have more than one vehicle, a leased or hire-purchase vehicle, or a pool with several assets, a Chartered Accountant can work out the allowances properly. HMRC's capital allowances guidance on GOV.UK is a good starting point.",
   },
   {
     topic: "The combined employment and self-employment National Insurance cap",

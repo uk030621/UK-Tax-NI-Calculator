@@ -361,6 +361,47 @@ function runChecks(rows: TaxYearRates[]) {
   expectNumber("Tax year documents without BPA/MCA figures still calculate (allowance unchanged)", calculateMultiIncomeTax({ employmentIncome: 20000, blindPersonsAllowance: true, claimingMarriedCouplesAllowance: true }, noBpaRates).personalAllowance, 12570);
   expectFlag("…and report that BPA is not available for that year", calculateMultiIncomeTax({ employmentIncome: 20000, blindPersonsAllowance: true }, noBpaRates).blindPersonsAllowance.available, false);
 
+  section("Vehicle costs: simplified mileage and capital allowances for one vehicle");
+  const uk25 = find("2025-26", "uk");
+  const vehicleCalc = (vehicleAllowance: NonNullable<MultiIncomeInput["vehicleAllowance"]>, rates: TaxYearRates = uk) =>
+    run({ selfEmploymentProfit: 30000, vehicleAllowance }, rates).vehicles.allowance!;
+  expectNumber("Mileage 2026-27: 12,000 car miles = 10,000 × 55p + 2,000 × 25p", run({ selfEmploymentProfit: 30000, businessMilesCarVan: 12000 }).vehicles.mileage.expense, 6000);
+  expectNumber("Mileage 2025-26: 12,000 car miles = 10,000 × 45p + 2,000 × 25p", run({ selfEmploymentProfit: 30000, businessMilesCarVan: 12000 }, uk25).vehicles.mileage.expense, 5000);
+  expectNumber("Mileage: 1,000 motorcycle miles at 24p", run({ selfEmploymentProfit: 30000, businessMilesMotorcycle: 1000 }).vehicles.mileage.expense, 240);
+  expectNumber("Mileage becomes a business expense (£30,000 − £6,000 = £24,000 profit)", 30000 - run({ selfEmploymentProfit: 30000, businessMilesCarVan: 12000 }).nonSavings.selfEmploymentDeductionApplied, 24000);
+  const petrol = vehicleCalc({ type: "car", businessUsePercent: 100, costThisYear: 20000, condition: "new", co2Band: "over50" });
+  expectNumber("New car over 50 g/km, £20,000: special pool 6% = £1,200", petrol.allowanceClaimed, 1200);
+  expectNumber("…and £18,800 carries forward", petrol.poolCarriedForward, 18800);
+  const hybrid = vehicleCalc({ type: "car", businessUsePercent: 80, costThisYear: 30000, condition: "new", co2Band: "upto50" });
+  expectNumber("New car up to 50 g/km, £30,000, 80% business, 2026-27: 14% = £4,200 × 80% = £3,360", hybrid.allowanceClaimed, 3360);
+  expectNumber("…£25,800 carries forward (before the private-use share)", hybrid.poolCarriedForward, 25800);
+  expectNumber("Same car in 2025-26 (18%): £5,400 × 80% = £4,320", vehicleCalc({ type: "car", businessUsePercent: 80, costThisYear: 30000, condition: "new", co2Band: "upto50" }, uk25).allowanceClaimed, 4320);
+  expectNumber("New zero-emission car £40,000: 100% first-year allowance", vehicleCalc({ type: "car", businessUsePercent: 100, costThisYear: 40000, condition: "new", co2Band: "zero" }).allowanceClaimed, 40000);
+  expectNumber("…at 70% business use: £28,000", vehicleCalc({ type: "car", businessUsePercent: 70, costThisYear: 40000, condition: "new", co2Band: "zero" }).allowanceClaimed, 28000);
+  expectNumber("Second-hand zero-emission car £10,000: no first-year allowance, main pool 14% = £1,400", vehicleCalc({ type: "car", businessUsePercent: 100, costThisYear: 10000, condition: "secondhand", co2Band: "zero" }).allowanceClaimed, 1400);
+  expectNumber("Van £25,000 at 90% business: Annual Investment Allowance £22,500", vehicleCalc({ type: "van", businessUsePercent: 90, costThisYear: 25000 }).allowanceClaimed, 22500);
+  expectNumber("Motorcycle £6,000: Annual Investment Allowance in full", vehicleCalc({ type: "motorcycle", businessUsePercent: 100, costThisYear: 6000 }).allowanceClaimed, 6000);
+  expectNumber("Earlier-year vehicle, main pool £10,000 b/f: 14% = £1,400", vehicleCalc({ type: "car", businessUsePercent: 100, poolBroughtForward: 10000, poolType: "main" }).allowanceClaimed, 1400);
+  expectNumber("…2025-26 would be 18% = £1,800", vehicleCalc({ type: "car", businessUsePercent: 100, poolBroughtForward: 10000, poolType: "main" }, uk25).allowanceClaimed, 1800);
+  expectNumber("Special pool £10,000 b/f: 6% = £600", vehicleCalc({ type: "car", businessUsePercent: 100, poolBroughtForward: 10000, poolType: "special" }).allowanceClaimed, 600);
+  const small = vehicleCalc({ type: "car", businessUsePercent: 100, poolBroughtForward: 800, poolType: "main" });
+  expectNumber("Small pool £800 b/f: written off in full", small.allowanceClaimed, 800);
+  expectNumber("…nothing left to carry forward", small.poolCarriedForward, 0);
+  const soldHigh = vehicleCalc({ type: "car", businessUsePercent: 100, poolBroughtForward: 8000, poolType: "main", saleProceeds: 9000 });
+  expectNumber("Sold for £9,000 against £8,000 left: balancing charge £1,000", soldHigh.balancingCharge, 1000);
+  expectNumber("Balancing charge at 80% business use: £800", vehicleCalc({ type: "car", businessUsePercent: 80, poolBroughtForward: 8000, poolType: "main", saleProceeds: 9000 }).balancingCharge, 800);
+  expectNumber("Sold for £5,000 against £8,000 left, 80% business: balancing allowance £3,000 × 80% = £2,400", vehicleCalc({ type: "car", businessUsePercent: 80, poolBroughtForward: 8000, poolType: "main", saleProceeds: 5000 }).allowanceClaimed, 2400);
+  expectNumber("Sold for £5,000, 100% business: pool continues, 14% of £3,000 = £420", vehicleCalc({ type: "car", businessUsePercent: 100, poolBroughtForward: 8000, poolType: "main", saleProceeds: 5000 }).allowanceClaimed, 420);
+  const withCharge = run({ selfEmploymentProfit: 30000, vehicleAllowance: { type: "car", businessUsePercent: 100, poolBroughtForward: 8000, poolType: "main", saleProceeds: 9000 } });
+  expectNumber("A balancing charge is added to business income (£30,000 + £1,000)", withCharge.nonSavings.selfEmploymentGross, 31000);
+  const car = run({ selfEmploymentProfit: 30000, vehicleAllowance: { type: "car", businessUsePercent: 100, costThisYear: 20000, condition: "new", co2Band: "over50" } });
+  expectNumber("Allowance flows into the self-employment expenses (£1,200 beats the £1,000 trading allowance)", car.nonSavings.selfEmploymentExpensesTotal, 1200);
+  expectFlag("…so itemised expenses are used", car.nonSavings.selfEmploymentDeductionMethod === "expenses", true);
+  const noVehicleRates: TaxYearRates = { ...uk, vehicles: undefined };
+  const noV = calculateMultiIncomeTax({ selfEmploymentProfit: 30000, businessMilesCarVan: 12000, vehicleAllowance: { type: "car", businessUsePercent: 100, costThisYear: 20000, condition: "new", co2Band: "over50" } }, noVehicleRates);
+  expectNumber("Tax years without vehicle figures: nothing is applied", noV.nonSavings.selfEmploymentExpensesTotal, 0);
+  expectFlag("…and the result says vehicles aren't available", noV.vehicles.available, false);
+
   section("Tax code estimate (PAYE codes: allowance ÷ 10, plus a letter)");
   const codeFor = (r: CalculationResult, extra: Partial<TaxCodeInput> = {}) =>
     estimateTaxCode({

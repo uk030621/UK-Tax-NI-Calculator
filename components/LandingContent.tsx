@@ -313,7 +313,7 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
             <li>Business Asset Disposal Relief and Investors&rsquo; Relief</li>
             <li>Partial Private Residence Relief (a let period, business use, or time away)</li>
             <li>Foreign tax credit relief on capital gains</li>
-            <li>Capital allowances for business vehicles</li>
+            <li>Capital allowances beyond a single vehicle (several vehicles, leasing, hire purchase)</li>
           </ul>
           <h4 className="mt-4 text-[13px] font-semibold uppercase tracking-wide text-amber-800">
             Income, allowances and pensions

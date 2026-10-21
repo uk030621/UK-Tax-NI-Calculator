@@ -49,6 +49,16 @@ interface Draft {
   mcaMinimum: number;
   mcaIncomeLimit: number;
   mcaReliefRate: number;
+  vehMainPoolRate: number;
+  vehSpecialPoolRate: number;
+  vehCo2Threshold: number;
+  vehSmallPoolLimit: number;
+  vehAIA: number;
+  vehZeroEmissionFYA: boolean;
+  vehMileageLimit: number;
+  vehMileageFirstRate: number;
+  vehMileageRate: number;
+  vehMotorcycleRate: number;
 }
 
 const blankDraft: Draft = {
@@ -119,6 +129,16 @@ const blankDraft: Draft = {
   mcaMinimum: 4530,
   mcaIncomeLimit: 39200,
   mcaReliefRate: 0.1,
+  vehMainPoolRate: 0.14,
+  vehSpecialPoolRate: 0.06,
+  vehCo2Threshold: 50,
+  vehSmallPoolLimit: 1000,
+  vehAIA: 1000000,
+  vehZeroEmissionFYA: true,
+  vehMileageLimit: 10000,
+  vehMileageFirstRate: 0.55,
+  vehMileageRate: 0.25,
+  vehMotorcycleRate: 0.24,
 };
 
 function draftFromDocs(taxYear: string, uk: TaxYearRates, scotland: TaxYearRates): Draft {
@@ -164,6 +184,17 @@ function draftFromDocs(taxYear: string, uk: TaxYearRates, scotland: TaxYearRates
     mcaMinimum: uk.marriedCouplesAllowance?.minimum ?? 0,
     mcaIncomeLimit: uk.marriedCouplesAllowance?.incomeLimit ?? 0,
     mcaReliefRate: uk.marriedCouplesAllowance?.reliefRate ?? 0.1,
+    // Years saved before vehicle figures existed start at 0 (switching the feature off) so the administrator notices.
+    vehMainPoolRate: uk.vehicles?.mainPoolRate ?? 0,
+    vehSpecialPoolRate: uk.vehicles?.specialRatePoolRate ?? 0,
+    vehCo2Threshold: uk.vehicles?.co2Threshold ?? 50,
+    vehSmallPoolLimit: uk.vehicles?.smallPoolLimit ?? 1000,
+    vehAIA: uk.vehicles?.annualInvestmentAllowance ?? 0,
+    vehZeroEmissionFYA: uk.vehicles?.zeroEmissionFirstYearAllowance ?? false,
+    vehMileageLimit: uk.vehicles?.mileage.carVanFirstMilesLimit ?? 10000,
+    vehMileageFirstRate: uk.vehicles?.mileage.carVanFirstRate ?? 0,
+    vehMileageRate: uk.vehicles?.mileage.carVanRate ?? 0,
+    vehMotorcycleRate: uk.vehicles?.mileage.motorcycleRate ?? 0,
   };
 }
 
@@ -221,6 +252,24 @@ function draftToDocs(draft: Draft): { uk: TaxYearRates; scotland: TaxYearRates }
       incomeLimit: draft.mcaIncomeLimit,
       reliefRate: draft.mcaReliefRate,
     },
+    // A main pool rate of 0 means "not set up": the app then ignores vehicle inputs.
+    vehicles:
+      draft.vehMainPoolRate > 0 || draft.vehMileageFirstRate > 0
+        ? {
+            mainPoolRate: draft.vehMainPoolRate,
+            specialRatePoolRate: draft.vehSpecialPoolRate,
+            co2Threshold: draft.vehCo2Threshold,
+            smallPoolLimit: draft.vehSmallPoolLimit,
+            annualInvestmentAllowance: draft.vehAIA,
+            zeroEmissionFirstYearAllowance: draft.vehZeroEmissionFYA,
+            mileage: {
+              carVanFirstMilesLimit: draft.vehMileageLimit,
+              carVanFirstRate: draft.vehMileageFirstRate,
+              carVanRate: draft.vehMileageRate,
+              motorcycleRate: draft.vehMotorcycleRate,
+            },
+          }
+        : undefined,
   };
   return {
     uk: { ...shared, region: "uk", incomeTaxBands: draft.ukBands },
@@ -643,6 +692,75 @@ export function AdminTaxYearForm() {
         </div>
       </Section>
 
+      <Section
+        title="Vehicle costs"
+        subtitle="Capital allowance rates and the flat mileage rates for the self-employed. Set both rates to 0 to switch vehicle costs off."
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <NumberField
+            label="Main pool writing-down rate"
+            value={+(draft.vehMainPoolRate * 100).toFixed(4)}
+            onChange={(v) => update("vehMainPoolRate", (Number(v) || 0) / 100)}
+            suffix="%"
+          />
+          <NumberField
+            label="Special rate pool writing-down rate"
+            value={+(draft.vehSpecialPoolRate * 100).toFixed(4)}
+            onChange={(v) => update("vehSpecialPoolRate", (Number(v) || 0) / 100)}
+            suffix="%"
+          />
+          <NumberField
+            label="CO2 threshold for the special rate pool (g/km)"
+            value={draft.vehCo2Threshold}
+            onChange={(v) => update("vehCo2Threshold", Number(v))}
+          />
+          <NumberField
+            label="Small pool limit"
+            value={draft.vehSmallPoolLimit}
+            onChange={(v) => update("vehSmallPoolLimit", Number(v))}
+            prefix="£"
+          />
+          <NumberField
+            label="Annual Investment Allowance"
+            value={draft.vehAIA}
+            onChange={(v) => update("vehAIA", Number(v))}
+            prefix="£"
+          />
+          <NumberField
+            label="Car and van miles at the higher rate"
+            value={draft.vehMileageLimit}
+            onChange={(v) => update("vehMileageLimit", Number(v))}
+          />
+          <NumberField
+            label="Car and van rate, first miles (£ per mile)"
+            value={draft.vehMileageFirstRate}
+            onChange={(v) => update("vehMileageFirstRate", Number(v))}
+            prefix="£"
+          />
+          <NumberField
+            label="Car and van rate after that (£ per mile)"
+            value={draft.vehMileageRate}
+            onChange={(v) => update("vehMileageRate", Number(v))}
+            prefix="£"
+          />
+          <NumberField
+            label="Motorcycle rate (£ per mile)"
+            value={draft.vehMotorcycleRate}
+            onChange={(v) => update("vehMotorcycleRate", Number(v))}
+            prefix="£"
+          />
+        </div>
+        <label className="mt-3 flex items-start gap-2.5 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={draft.vehZeroEmissionFYA}
+            onChange={(e) => update("vehZeroEmissionFYA", e.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
+          <span>100% first-year allowance for new zero-emission cars is available</span>
+        </label>
+      </Section>
+
       {status === "error" && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{errorMsg}</p>
       )}
@@ -710,6 +828,7 @@ function NumberField({
         )}
         <input
           type={type}
+          step={type === "number" ? "any" : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
