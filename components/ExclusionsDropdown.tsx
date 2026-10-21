@@ -59,18 +59,11 @@ const EXCLUSIONS: Exclusion[] = [
       "The value of each benefit is shown on the P11D your employer gives you. Adding it to your salary here would overstate your National Insurance, because employees don't pay National Insurance on most benefits, so ask your employer or a Chartered Accountant how to treat it.",
   },
   {
-    topic: "Marriage Allowance: checking your partner's side of the transfer",
+    topic: "Allowances shared between partners: checking your partner's side",
     whyExcluded:
-      "This app lets you model either side of a Marriage Allowance transfer. If you receive it, it warns you when your own income looks too high to qualify. If you give it, it warns you when your income is above your Personal Allowance. It only ever calculates one person's tax at a time, so it cannot check your partner's side of the same transfer, or how the two figures combine for the couple.",
+      "This app handles Marriage Allowance (giving or receiving), Blind Person's Allowance (including unused allowance transferred in) and Married Couple's Allowance. For Marriage Allowance it warns you when your own income looks too high to qualify, or too high to give. It only ever calculates one person's tax at a time, so it cannot check your partner's side of the same transfer, or how the two figures combine for the couple. Where an unused amount can be passed on, your results show how much, but the transfer itself is arranged with HMRC.",
     advice:
-      "Run your partner's income through this calculator separately, with the opposite box ticked, or use GOV.UK's own Marriage Allowance checker, to confirm you both qualify before relying on the saving shown here.",
-  },
-  {
-    topic: "Blind Person's Allowance and Married Couple's Allowance",
-    whyExcluded:
-      "Blind Person's Allowance adds to the Personal Allowance of someone registered as blind or severely sight impaired. Married Couple's Allowance is only available where at least one partner was born before 6 April 1935. Neither is modelled. They are different from Marriage Allowance, which this app does handle.",
-    advice:
-      "Check the rules and current amounts on GOV.UK, or ask HMRC to confirm what you are entitled to before relying on the figures shown here.",
+      "Run your partner's income through this calculator separately, with the matching box ticked, or use GOV.UK's own checkers, to confirm you both qualify before relying on the saving shown here. Transfers of Blind Person's Allowance and Married Couple's Allowance are made with HMRC (form 575(T) for Blind Person's Allowance).",
   },
   {
     topic: "Non-UK residence, the Statutory Residence Test, and the foreign income and gains regime",

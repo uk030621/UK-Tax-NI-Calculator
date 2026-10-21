@@ -64,6 +64,9 @@ export async function POST(request: NextRequest) {
     hasPostgraduateLoan,
     receivingMarriageAllowance,
     givingMarriageAllowance,
+    blindPersonsAllowance,
+    blindPersonsAllowanceTransferredIn,
+    claimingMarriedCouplesAllowance,
   } = body;
 
   if (!taxYear || (region !== "uk" && region !== "scotland")) {
@@ -78,6 +81,8 @@ export async function POST(request: NextRequest) {
     ["hasPostgraduateLoan", hasPostgraduateLoan],
     ["receivingMarriageAllowance", receivingMarriageAllowance],
     ["givingMarriageAllowance", givingMarriageAllowance],
+    ["blindPersonsAllowance", blindPersonsAllowance],
+    ["claimingMarriedCouplesAllowance", claimingMarriedCouplesAllowance],
     ["rentARoomShared", rentARoomShared],
   ] as const) {
     if (value !== undefined && typeof value !== "boolean") {
@@ -121,6 +126,7 @@ export async function POST(request: NextRequest) {
     giftAidDonations,
     mainResidenceGain,
     childBenefitReceived,
+    blindPersonsAllowanceTransferredIn,
   };
   for (const [key, value] of Object.entries(amounts)) {
     if (value !== undefined && !isValidAmount(value)) {
@@ -191,6 +197,8 @@ export async function POST(request: NextRequest) {
       hasPostgraduateLoan,
       receivingMarriageAllowance,
       givingMarriageAllowance,
+      blindPersonsAllowance,
+      claimingMarriedCouplesAllowance,
     },
     rates
   );

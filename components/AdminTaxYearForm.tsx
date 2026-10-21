@@ -44,6 +44,11 @@ interface Draft {
   studentLoanUndergraduateRate: number;
   studentLoanPostgraduateRate: number;
   marriageAllowanceTransferable: number;
+  blindPersonsAllowance: number;
+  mcaMaximum: number;
+  mcaMinimum: number;
+  mcaIncomeLimit: number;
+  mcaReliefRate: number;
 }
 
 const blankDraft: Draft = {
@@ -109,6 +114,11 @@ const blankDraft: Draft = {
   studentLoanUndergraduateRate: 0.09,
   studentLoanPostgraduateRate: 0.06,
   marriageAllowanceTransferable: 1260,
+  blindPersonsAllowance: 3250,
+  mcaMaximum: 11700,
+  mcaMinimum: 4530,
+  mcaIncomeLimit: 39200,
+  mcaReliefRate: 0.1,
 };
 
 function draftFromDocs(taxYear: string, uk: TaxYearRates, scotland: TaxYearRates): Draft {
@@ -147,6 +157,13 @@ function draftFromDocs(taxYear: string, uk: TaxYearRates, scotland: TaxYearRates
     studentLoanUndergraduateRate: uk.studentLoan.undergraduateRate,
     studentLoanPostgraduateRate: uk.studentLoan.postgraduateRate,
     marriageAllowanceTransferable: uk.marriageAllowanceTransferable,
+    // Years saved before these existed have no figures: start from 0 so the
+    // administrator notices and fills them in (0 switches the allowance off).
+    blindPersonsAllowance: uk.blindPersonsAllowance ?? 0,
+    mcaMaximum: uk.marriedCouplesAllowance?.maximum ?? 0,
+    mcaMinimum: uk.marriedCouplesAllowance?.minimum ?? 0,
+    mcaIncomeLimit: uk.marriedCouplesAllowance?.incomeLimit ?? 0,
+    mcaReliefRate: uk.marriedCouplesAllowance?.reliefRate ?? 0.1,
   };
 }
 
@@ -197,6 +214,13 @@ function draftToDocs(draft: Draft): { uk: TaxYearRates; scotland: TaxYearRates }
       postgraduateRate: draft.studentLoanPostgraduateRate,
     },
     marriageAllowanceTransferable: draft.marriageAllowanceTransferable,
+    blindPersonsAllowance: draft.blindPersonsAllowance,
+    marriedCouplesAllowance: {
+      maximum: draft.mcaMaximum,
+      minimum: draft.mcaMinimum,
+      incomeLimit: draft.mcaIncomeLimit,
+      reliefRate: draft.mcaReliefRate,
+    },
   };
   return {
     uk: { ...shared, region: "uk", incomeTaxBands: draft.ukBands },
@@ -573,6 +597,50 @@ export function AdminTaxYearForm() {
           onChange={(v) => update("marriageAllowanceTransferable", Number(v))}
           prefix="£"
         />
+      </Section>
+
+      <Section
+        title="Blind Person's Allowance"
+        subtitle="An extra tax-free amount on top of the Personal Allowance. Not tapered. 0 switches it off."
+      >
+        <NumberField
+          label="Allowance"
+          value={draft.blindPersonsAllowance}
+          onChange={(v) => update("blindPersonsAllowance", Number(v))}
+          prefix="£"
+        />
+      </Section>
+
+      <Section
+        title="Married Couple's Allowance"
+        subtitle="Only where a partner was born before 6 April 1935. A tax reduction at the relief rate; the amount falls by £1 for every £2 of income over the limit, to the minimum. A maximum of 0 switches it off."
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <NumberField
+            label="Maximum amount"
+            value={draft.mcaMaximum}
+            onChange={(v) => update("mcaMaximum", Number(v))}
+            prefix="£"
+          />
+          <NumberField
+            label="Minimum amount"
+            value={draft.mcaMinimum}
+            onChange={(v) => update("mcaMinimum", Number(v))}
+            prefix="£"
+          />
+          <NumberField
+            label="Income limit"
+            value={draft.mcaIncomeLimit}
+            onChange={(v) => update("mcaIncomeLimit", Number(v))}
+            prefix="£"
+          />
+          <NumberField
+            label="Relief rate"
+            value={+(draft.mcaReliefRate * 100).toFixed(4)}
+            onChange={(v) => update("mcaReliefRate", (Number(v) || 0) / 100)}
+            suffix="%"
+          />
+        </div>
       </Section>
 
       {status === "error" && (

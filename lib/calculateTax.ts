@@ -125,6 +125,30 @@ export interface TaxYearRates {
   /** Flat amount transferable between spouses/civil partners — 10% of the Personal Allowance, rounded up to the nearest £10. */
   marriageAllowanceTransferable: number;
 
+  /**
+   * Blind Person's Allowance: an extra tax-free amount ON TOP OF the
+   * Personal Allowance, for someone registered as blind or severely sight
+   * impaired (England and Wales) or unable to do work that needs eyesight
+   * (Scotland and Northern Ireland). Not income-tested and NOT tapered
+   * away above £100,000. Optional so that tax-year documents saved before
+   * it was added keep working; a missing figure simply switches it off.
+   */
+  blindPersonsAllowance?: number;
+
+  /**
+   * Married Couple's Allowance: only where at least one partner was born
+   * before 6 April 1935. Not an allowance against income but a TAX
+   * REDUCTION of `reliefRate` (10%) of the amount. The amount starts at
+   * `maximum` and falls by £1 for every £2 of the claimant's adjusted net
+   * income above `incomeLimit`, never below `minimum`. Optional, as above.
+   */
+  marriedCouplesAllowance?: {
+    maximum: number;
+    minimum: number;
+    incomeLimit: number;
+    reliefRate: number;
+  };
+
   updatedAt?: Date;
 }
 
@@ -209,6 +233,13 @@ export interface MultiIncomeInput {
    * (the API rejects both together).
    */
   givingMarriageAllowance?: boolean;
+
+  /** True if this taxpayer qualifies for Blind Person's Allowance in their own right. */
+  blindPersonsAllowance?: boolean;
+  /** Unused Blind Person's Allowance transferred in from a spouse or civil partner (£). Capped at one full allowance. */
+  blindPersonsAllowanceTransferredIn?: number;
+  /** True if this taxpayer is the one claiming Married Couple's Allowance (the couple's eligibility, including the 1935 birth date, is not checked). */
+  claimingMarriedCouplesAllowance?: boolean;
 }
 
 export interface BandBreakdown {
@@ -350,6 +381,29 @@ export interface CalculationResult {
     giverAppearsEligible: boolean;
     /** Income that now sits above the reduced allowance and so may be taxed because of the transfer (0 unless giving). */
     giverIncomeAboveReducedAllowance: number;
+  };
+
+  blindPersonsAllowance: {
+    claimed: boolean;
+    /** false if the tax year's rates have no Blind Person's Allowance figure, so nothing was applied. */
+    available: boolean;
+    ownAmount: number;
+    transferredIn: number;
+    total: number; // added to the Personal Allowance after any taper
+    /** The part of the allowance that was not needed against this taxpayer's income. It can be transferred to a spouse or civil partner. */
+    unusedAmount: number;
+  };
+
+  marriedCouplesAllowance: {
+    claimed: boolean;
+    available: boolean;
+    adjustedNetIncome: number;
+    incomeLimit: number;
+    amount: number; // after the income-based reduction
+    taxReduction: number; // amount x relief rate, before it is capped by the tax due
+    taxReductionApplied: number; // what actually came off the bill
+    /** Reduction that exceeded the tax due. It can be transferred to a spouse or civil partner. */
+    unusedReduction: number;
   };
 }
 
@@ -686,10 +740,19 @@ export function calculateMultiIncomeTax(
     0,
     nonSavingsIncome + savingsInterest + dividendIncome - bandExtension
   );
-  const personalAllowance = taperedPersonalAllowance(
-    totalIncomeForTaper,
-    rates.personalAllowance + marriageAllowanceAmount - marriageAllowanceGiven
-  );
+  // Blind Person's Allowance sits on top of the Personal Allowance and is
+  // NOT tapered, so it is added after the taper is worked out.
+  const bpaAvailable = (rates.blindPersonsAllowance ?? 0) > 0;
+  const bpaOwn = bpaAvailable && input.blindPersonsAllowance ? (rates.blindPersonsAllowance as number) : 0;
+  const bpaTransferredIn = bpaAvailable
+    ? Math.min(Math.max(0, input.blindPersonsAllowanceTransferredIn ?? 0), rates.blindPersonsAllowance as number)
+    : 0;
+  const bpaTotal = bpaOwn + bpaTransferredIn;
+  const personalAllowance =
+    taperedPersonalAllowance(
+      totalIncomeForTaper,
+      rates.personalAllowance + marriageAllowanceAmount - marriageAllowanceGiven
+    ) + bpaTotal;
 
   let allowanceLeft = personalAllowance;
 
@@ -941,9 +1004,24 @@ export function calculateMultiIncomeTax(
 
   const incomeTaxBeforeRelief =
     nonSavingsResult.tax + savingsTaxed.tax + dividendsTaxed.tax;
+  // Married Couple's Allowance: a tax reduction applied to the bill first.
+  // Any part that exceeds the tax due is reported as unused (it can be
+  // transferred to a spouse or civil partner).
+  const mcaRates = rates.marriedCouplesAllowance;
+  const mcaAvailable = Boolean(mcaRates && mcaRates.maximum > 0);
+  const mcaClaimed = mcaAvailable && Boolean(input.claimingMarriedCouplesAllowance);
+  const mcaAmount =
+    mcaClaimed && mcaRates
+      ? Math.max(
+          mcaRates.minimum,
+          mcaRates.maximum - Math.floor(Math.max(0, totalIncomeForTaper - mcaRates.incomeLimit) / 2)
+        )
+      : 0;
+  const mcaReduction = mcaClaimed && mcaRates ? mcaAmount * mcaRates.reliefRate : 0;
+  const mcaApplied = Math.min(mcaReduction, incomeTaxBeforeRelief);
   const totalIncomeTax = Math.max(
     0,
-    incomeTaxBeforeRelief - mortgageInterestCredit - dividendForeignTaxCredit
+    incomeTaxBeforeRelief - mcaApplied - mortgageInterestCredit - dividendForeignTaxCredit
   );
   const totalGrossIncome =
     employmentIncome +
@@ -1107,6 +1185,26 @@ export function calculateMultiIncomeTax(
       amountGiven: marriageAllowanceGiven,
       giverAppearsEligible: marriageAllowanceGiverAppearsEligible,
       giverIncomeAboveReducedAllowance,
+    },
+
+    blindPersonsAllowance: {
+      claimed: Boolean(input.blindPersonsAllowance) || (input.blindPersonsAllowanceTransferredIn ?? 0) > 0,
+      available: bpaAvailable,
+      ownAmount: bpaOwn,
+      transferredIn: bpaTransferredIn,
+      total: bpaTotal,
+      unusedAmount: Math.min(bpaTotal, Math.max(0, allowanceLeft)),
+    },
+
+    marriedCouplesAllowance: {
+      claimed: Boolean(input.claimingMarriedCouplesAllowance),
+      available: mcaAvailable,
+      adjustedNetIncome: totalIncomeForTaper,
+      incomeLimit: mcaRates?.incomeLimit ?? 0,
+      amount: mcaAmount,
+      taxReduction: mcaReduction,
+      taxReductionApplied: mcaApplied,
+      unusedReduction: mcaReduction - mcaApplied,
     },
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { createContext, useContext, useEffect, useId, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/Spinner";
 import { TaxCodeCheck } from "@/components/TaxCodeCheck";
@@ -150,6 +150,8 @@ interface HistoryEntry {
     hasPostgraduateLoan?: boolean;
   };
   marriageAllowance?: { requested?: boolean; giving?: boolean };
+  blindPersonsAllowance?: { ownAmount?: number; transferredIn?: number };
+  marriedCouplesAllowance?: { claimed?: boolean };
   netIncome?: number;
   taxYear?: string;
   region?: Region;
@@ -209,6 +211,7 @@ export function TaxCalculatorForm() {
   // "net" is the only interpretation that's never silently wrong.
   const [pensionEntryMode, setPensionEntryMode] = useState<"net" | "gross">("net");
   const [showOtherIncome, setShowOtherIncome] = useState(false);
+  const [cardResetCount, setCardResetCount] = useState(0);
   const [showExpenses, setShowExpenses] = useState(false);
   const [rentalExpenses, setRentalExpenses] = useState<Record<string, string>>(emptyExpenses);
   const [showRentARoomExpenses, setShowRentARoomExpenses] = useState(false);
@@ -233,6 +236,9 @@ export function TaxCalculatorForm() {
   const [hasPostgraduateLoan, setHasPostgraduateLoan] = useState(false);
   const [receivingMarriageAllowance, setReceivingMarriageAllowance] = useState(false);
   const [givingMarriageAllowance, setGivingMarriageAllowance] = useState(false);
+  const [blindPersonsAllowance, setBlindPersonsAllowance] = useState(false);
+  const [bpaTransferredIn, setBpaTransferredIn] = useState("");
+  const [claimingMarriedCouplesAllowance, setClaimingMarriedCouplesAllowance] = useState(false);
   // Carry-forward offer: which saved calculation the user picked, whether
   // they've applied it (we then show where the figures came from, with an
   // Undo), and whether they've dismissed the offer for this tax year.
@@ -376,6 +382,9 @@ export function TaxCalculatorForm() {
     setHasPostgraduateLoan(Boolean(entry.studentLoan?.hasPostgraduateLoan));
     setReceivingMarriageAllowance(Boolean(entry.marriageAllowance?.requested));
     setGivingMarriageAllowance(Boolean(entry.marriageAllowance?.giving));
+    setBlindPersonsAllowance(Boolean(entry.blindPersonsAllowance?.ownAmount));
+    setBpaTransferredIn(entry.blindPersonsAllowance?.transferredIn ? String(entry.blindPersonsAllowance.transferredIn) : "");
+    setClaimingMarriedCouplesAllowance(Boolean(entry.marriedCouplesAllowance?.claimed));
     setCarryForwardAppliedFrom(null); // the saved entry's own figures replace any filled in from last year
     if (entry.taxYear) setTaxYear(entry.taxYear);
     if (entry.region) setRegionChoice(entry.region);
@@ -421,6 +430,10 @@ export function TaxCalculatorForm() {
     setHasPostgraduateLoan(false);
     setReceivingMarriageAllowance(false);
     setGivingMarriageAllowance(false);
+    setBlindPersonsAllowance(false);
+    setBpaTransferredIn("");
+    setClaimingMarriedCouplesAllowance(false);
+    setCardResetCount((c) => c + 1);
     setCarryForwardAppliedFrom(null);
     setShowOtherIncome(false);
     setShowExpenses(false);
@@ -443,7 +456,10 @@ export function TaxCalculatorForm() {
     studentLoanPlan !== "none" ||
     hasPostgraduateLoan ||
     receivingMarriageAllowance ||
-    givingMarriageAllowance;
+    givingMarriageAllowance ||
+    blindPersonsAllowance ||
+    bpaTransferredIn !== "" ||
+    claimingMarriedCouplesAllowance;
 
   function handleClearAll() {
     if (formHasInput) {
@@ -556,6 +572,9 @@ export function TaxCalculatorForm() {
       hasPostgraduateLoan,
       receivingMarriageAllowance,
       givingMarriageAllowance,
+      blindPersonsAllowance,
+      blindPersonsAllowanceTransferredIn: Number(bpaTransferredIn) || 0,
+      claimingMarriedCouplesAllowance,
     };
 
     setLoading(true);
@@ -593,6 +612,7 @@ export function TaxCalculatorForm() {
 
   return (
     <div className="space-y-6">
+      <CardResetContext.Provider value={cardResetCount}>
       <form
         onSubmit={handleSubmit}
         className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-6 shadow-sm"
@@ -848,6 +868,65 @@ export function TaxCalculatorForm() {
                 yourself — the results include that. Your partner&apos;s
                 saving shows on their own calculation, with the box above
                 ticked. You can tick one box or the other, not both.
+              </p>
+            </CategoryCard>
+
+            <CategoryCard tone="adjust" icon="🦯" title="Blind Person's Allowance" collapsible hasData={blindPersonsAllowance || bpaTransferredIn !== ""}>
+              <label className="flex items-start gap-2.5 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={blindPersonsAllowance}
+                  onChange={(e) => setBlindPersonsAllowance(e.target.checked)}
+                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                <span>I qualify for Blind Person&apos;s Allowance</span>
+              </label>
+              <p className="mt-1.5 text-sm text-slate-500">
+                An extra tax-free amount on top of your Personal Allowance. In
+                England and Wales you must be registered as blind or severely
+                sight impaired. In Scotland and Northern Ireland it applies if
+                your sight stops you doing any work that needs eyesight. It
+                doesn&apos;t depend on your income, and it isn&apos;t reduced above
+                £100,000. You need to claim it from HMRC. This app can&apos;t check
+                that you qualify.
+              </p>
+              <div className="mt-4">
+                <MoneyField
+                  label="Unused allowance transferred to you by a spouse or civil partner (optional)"
+                  value={bpaTransferredIn}
+                  onChange={setBpaTransferredIn}
+                  placeholder="e.g. 1,500"
+                />
+                <p className="mt-1.5 text-sm text-slate-500">
+                  If your partner can&apos;t use all of their own allowance, they
+                  can pass the unused part to you. Enter the amount here. Your
+                  results show how much of yours is unused if you could pass some
+                  on.
+                </p>
+              </div>
+            </CategoryCard>
+
+            <CategoryCard tone="adjust" icon="💍" title="Married Couple's Allowance" collapsible hasData={claimingMarriedCouplesAllowance}>
+              <label className="flex items-start gap-2.5 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={claimingMarriedCouplesAllowance}
+                  onChange={(e) => setClaimingMarriedCouplesAllowance(e.target.checked)}
+                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                <span>I am claiming Married Couple&apos;s Allowance</span>
+              </label>
+              <p className="mt-1.5 text-sm text-slate-500">
+                Available if you are married or in a civil partnership, live
+                with your partner, and at least one of you was born before 6
+                April 1935. It reduces your tax bill by 10% of a set amount
+                (the amount is smaller if your income is high). If you married
+                before 5 December 2005 it normally goes to the husband.
+                Otherwise it normally goes to whichever partner has the higher
+                income. Tick this only if you are the one claiming. Any part you
+                can&apos;t use because your tax bill is too small can be passed to
+                your partner. The results show the unused amount. This app
+                can&apos;t check your eligibility.
               </p>
             </CategoryCard>
           </div>
@@ -1359,6 +1438,7 @@ export function TaxCalculatorForm() {
           </div>
         </div>
       </form>
+      </CardResetContext.Provider>
 
       {result && <ResultCard result={result} welsh={resultWelsh} />}
 
@@ -1533,6 +1613,10 @@ const CARD_TONES: Record<
  * icon and a group label, plus a badge showing what has been entered so far.
  * The colour tells you which kind of figure this is at a glance.
  */
+// Bumped by "Clear all" so every card forgets whether it was opened and goes
+// back to following its data (closed when empty).
+const CardResetContext = createContext(0);
+
 function CategoryCard({
   tone,
   icon,
@@ -1557,6 +1641,10 @@ function CategoryCard({
   // data (typed, loaded from a saved calculation, or carried forward) it stays
   // open, so it can never close while the person is mid-edit.
   const [manual, setManual] = useState<boolean | null>(null);
+  const resetCount = useContext(CardResetContext);
+  useEffect(() => {
+    setManual(null);
+  }, [resetCount]);
   useEffect(() => {
     if (hasData && manual === null) setManual(true);
   }, [hasData, manual]);
@@ -1966,6 +2054,55 @@ function ResultCard({ result, welsh }: { result: CalculationResult; welsh: boole
                 too high for you to actually qualify as the recipient —
                 eligibility requires you to stay a basic-rate taxpayer.
                 Double-check before relying on this figure.
+              </span>
+            )}
+          </div>
+        )}
+
+        {result.blindPersonsAllowance.claimed && (
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            {result.blindPersonsAllowance.available ? (
+              <>
+                Blind Person&apos;s Allowance: {GBP.format(result.blindPersonsAllowance.total)} added to your
+                tax-free allowance, on top of your Personal Allowance.
+                {result.blindPersonsAllowance.unusedAmount > 0 && (
+                  <>
+                    {" "}
+                    {GBP.format(result.blindPersonsAllowance.unusedAmount)} of it wasn&apos;t needed against
+                    your income, so you can transfer that part to your spouse or civil partner (HMRC form
+                    575(T)).
+                  </>
+                )}
+              </>
+            ) : (
+              <span className="text-amber-600">
+                ⚠ This tax year has no Blind Person&apos;s Allowance figure set up, so it wasn&apos;t applied.
+                Please tell the administrator.
+              </span>
+            )}
+          </div>
+        )}
+
+        {result.marriedCouplesAllowance.claimed && (
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            {result.marriedCouplesAllowance.available ? (
+              <>
+                Married Couple&apos;s Allowance: {GBP.format(result.marriedCouplesAllowance.amount)} of
+                allowance, which reduces your tax by{" "}
+                {GBP.format(result.marriedCouplesAllowance.taxReductionApplied)}.
+                {result.marriedCouplesAllowance.unusedReduction > 0 && (
+                  <>
+                    {" "}
+                    A further {GBP.format(result.marriedCouplesAllowance.unusedReduction)} of the reduction
+                    couldn&apos;t be used because your tax bill was too small. You can transfer it to your
+                    partner by asking HMRC.
+                  </>
+                )}
+              </>
+            ) : (
+              <span className="text-amber-600">
+                ⚠ This tax year has no Married Couple&apos;s Allowance figures set up, so it wasn&apos;t applied.
+                Please tell the administrator.
               </span>
             )}
           </div>

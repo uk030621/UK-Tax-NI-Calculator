@@ -322,8 +322,7 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
             <li>The combined employment and self-employment National Insurance cap</li>
             <li>Pension Annual Allowance tapering</li>
             <li>Benefits in kind (P11D)</li>
-            <li>Marriage Allowance: checking your partner&rsquo;s side of the transfer</li>
-            <li>Blind Person&rsquo;s Allowance and Married Couple&rsquo;s Allowance</li>
+            <li>Allowances shared between partners: checking your partner&rsquo;s side</li>
           </ul>
           <h4 className="mt-4 text-[13px] font-semibold uppercase tracking-wide text-amber-800">
             Residence, filing and other taxes

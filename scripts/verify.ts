@@ -334,6 +334,33 @@ function runChecks(rows: TaxYearRates[]) {
   }
   const empty = run({});
   expectNumber("Empty input produces a zero result", Math.abs(empty.netIncome) + Math.abs(empty.totalDeductions), 0);
+  section("Blind Person's Allowance and Married Couple's Allowance (2026/27: £3,250; £11,700 max, £4,530 min, £39,200 limit)");
+  const bpa = run({ employmentIncome: 20000, blindPersonsAllowance: true });
+  expectNumber("BPA: adds £3,250 to the Personal Allowance", bpa.personalAllowance, 15820);
+  expectNumber("BPA: tax = (£20,000 − £15,820) × 20%", bpa.totalIncomeTax, 836);
+  expectNumber("BPA saves £650 (20% of £3,250)", run({ employmentIncome: 20000 }).totalIncomeTax - bpa.totalIncomeTax, 650);
+  expectNumber("BPA is not tapered above £100,000: £110,000 income = £7,570 + £3,250", run({ employmentIncome: 110000, blindPersonsAllowance: true }).personalAllowance, 10820);
+  expectNumber("BPA transferred in £1,000 adds £1,000", run({ employmentIncome: 20000, blindPersonsAllowanceTransferredIn: 1000 }).personalAllowance, 13570);
+  expectNumber("BPA transferred in is capped at one full allowance", run({ employmentIncome: 20000, blindPersonsAllowanceTransferredIn: 9999 }).personalAllowance, 15820);
+  expectNumber("BPA unused at £10,000 income: all £3,250 can be transferred", run({ employmentIncome: 10000, blindPersonsAllowance: true }).blindPersonsAllowance.unusedAmount, 3250);
+  expectNumber("BPA unused at £14,000 income: only £1,820 left", run({ employmentIncome: 14000, blindPersonsAllowance: true }).blindPersonsAllowance.unusedAmount, 1820);
+  expectNumber("BPA unused at £20,000 income: nothing left", bpa.blindPersonsAllowance.unusedAmount, 0);
+  expectNumber("BPA applies in Scotland too (PA + £3,250)", run({ employmentIncome: 20000, blindPersonsAllowance: true }, sc).personalAllowance, 15820);
+  const mca30 = run({ employmentIncome: 30000, claimingMarriedCouplesAllowance: true });
+  expectNumber("MCA at £30,000 (under the limit): maximum £11,700", mca30.marriedCouplesAllowance.amount, 11700);
+  expectNumber("MCA: tax reduction £1,170 (10%)", mca30.marriedCouplesAllowance.taxReductionApplied, 1170);
+  expectNumber("MCA: tax £3,486 − £1,170 = £2,316", mca30.totalIncomeTax, 2316);
+  expectNumber("MCA at £45,000: £5,800 over the limit reduces the amount by £2,900", run({ employmentIncome: 45000, claimingMarriedCouplesAllowance: true }).marriedCouplesAllowance.amount, 8800);
+  expectNumber("MCA at £60,000: floors at the minimum £4,530", run({ employmentIncome: 60000, claimingMarriedCouplesAllowance: true }).marriedCouplesAllowance.amount, 4530);
+  const mcaLow = run({ employmentIncome: 13000, claimingMarriedCouplesAllowance: true });
+  expectNumber("MCA capped by tax due: £86 applied", mcaLow.marriedCouplesAllowance.taxReductionApplied, 86);
+  expectNumber("MCA capped by tax due: £1,084 unused, transferable", mcaLow.marriedCouplesAllowance.unusedReduction, 1084);
+  expectNumber("MCA tax cannot go below zero", mcaLow.totalIncomeTax, 0);
+  expectNumber("Without a claim, MCA changes nothing", run({ employmentIncome: 30000 }).totalIncomeTax, 3486);
+  const noBpaRates: TaxYearRates = { ...uk, blindPersonsAllowance: undefined, marriedCouplesAllowance: undefined };
+  expectNumber("Tax year documents without BPA/MCA figures still calculate (allowance unchanged)", calculateMultiIncomeTax({ employmentIncome: 20000, blindPersonsAllowance: true, claimingMarriedCouplesAllowance: true }, noBpaRates).personalAllowance, 12570);
+  expectFlag("…and report that BPA is not available for that year", calculateMultiIncomeTax({ employmentIncome: 20000, blindPersonsAllowance: true }, noBpaRates).blindPersonsAllowance.available, false);
+
   section("Tax code estimate (PAYE codes: allowance ÷ 10, plus a letter)");
   const codeFor = (r: CalculationResult, extra: Partial<TaxCodeInput> = {}) =>
     estimateTaxCode({

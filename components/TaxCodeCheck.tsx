@@ -101,6 +101,13 @@ export function TaxCodeCheck({ result, welsh = false }: { result: CalculationRes
           everyone else (1257L) until income passes £100,000, when the allowance starts to reduce.
         </p>
 
+        {result.marriedCouplesAllowance?.claimed && (
+          <p className="text-sm text-slate-600">
+            You are claiming Married Couple&apos;s Allowance. HMRC includes it in your code, but this estimate
+            doesn&apos;t, so your actual code may be higher.
+          </p>
+        )}
+
         {estimated.notes.map((n) => (
           <p key={n} className="text-sm text-slate-600">
             {n}

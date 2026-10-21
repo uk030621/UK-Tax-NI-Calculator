@@ -75,6 +75,14 @@ const studentLoan2026 = {
 // itself has been frozen at £12,570.
 const marriageAllowanceTransferable = 1260;
 
+// Blind Person's Allowance (extra tax-free amount) and Married Couple's
+// Allowance (only where one partner was born before 6 April 1935; a 10% tax
+// reduction). Figures per GOV.UK / LITRG.
+const blindPersonsAllowance2025 = 3130;
+const blindPersonsAllowance2026 = 3250;
+const marriedCouplesAllowance2025 = { maximum: 11270, minimum: 4360, incomeLimit: 37700, reliefRate: 0.1 };
+const marriedCouplesAllowance2026 = { maximum: 11700, minimum: 4530, incomeLimit: 39200, reliefRate: 0.1 };
+
 const savingsAllowance = {
   basicRate: 1000,
   higherRate: 500,
@@ -154,6 +162,8 @@ export const taxYears: TaxYearRates[] = [
     hicbc,
     studentLoan: studentLoan2025,
     marriageAllowanceTransferable,
+    blindPersonsAllowance: blindPersonsAllowance2025,
+    marriedCouplesAllowance: marriedCouplesAllowance2025,
     updatedAt: new Date(),
   },
   {
@@ -180,6 +190,8 @@ export const taxYears: TaxYearRates[] = [
     hicbc,
     studentLoan: studentLoan2025,
     marriageAllowanceTransferable,
+    blindPersonsAllowance: blindPersonsAllowance2025,
+    marriedCouplesAllowance: marriedCouplesAllowance2025,
     updatedAt: new Date(),
   },
   // 2026/27 — dividend rates rose 2pp at the basic/higher bands (Autumn Budget 2025)
@@ -207,6 +219,8 @@ export const taxYears: TaxYearRates[] = [
     hicbc,
     studentLoan: studentLoan2026,
     marriageAllowanceTransferable,
+    blindPersonsAllowance: blindPersonsAllowance2026,
+    marriedCouplesAllowance: marriedCouplesAllowance2026,
     updatedAt: new Date(),
   },
   {
@@ -233,6 +247,8 @@ export const taxYears: TaxYearRates[] = [
     hicbc,
     studentLoan: studentLoan2026,
     marriageAllowanceTransferable,
+    blindPersonsAllowance: blindPersonsAllowance2026,
+    marriedCouplesAllowance: marriedCouplesAllowance2026,
     updatedAt: new Date(),
   },
 ];
