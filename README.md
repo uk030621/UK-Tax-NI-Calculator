@@ -189,11 +189,13 @@ region.
 - **An in-app user guide** at `/guide` (`app/guide/page.tsx`), linked from the footer of the landing page and the calculator. The text lives in `content/userGuide.ts` as Markdown and is rendered by `components/MarkdownGuide.tsx`. The administrator-only sections are shown only to signed-in administrators. When the standalone `-user-guide.md` changes, update `content/userGuide.ts` to match.
 - **A "What this calculator doesn't cover" dropdown** (`components/ExclusionsDropdown.tsx`,
   shown on the main page) explicitly lists every deliberate gap —
-  Business Asset Disposal Relief, partial Private Residence Relief,
-  the Class 1+4 NI cap, foreign tax credit on gains, non-UK residence
-  status, capital allowances for vehicles, Pension
+  Business Asset Disposal Relief and Investors' Relief, partial Private
+  Residence Relief, the Class 1+4 NI cap, foreign tax credit on gains,
+  non-UK residence status, capital allowances for vehicles, Pension
   Annual Allowance tapering, checking the other partner's side of a
-  Marriage Allowance transfer, and VAT/IHT/SDLT — each
+  Marriage Allowance transfer, benefits in kind (P11D), Blind Person's
+  and Married Couple's Allowances, Self Assessment payments on account,
+  and VAT/Inheritance Tax/property purchase taxes — each
   with a plain-English reason and concrete advice on where to get
   proper help (a Chartered Accountant, a Chartered Tax Adviser, or a
   specific piece of HMRC guidance, depending on the topic).

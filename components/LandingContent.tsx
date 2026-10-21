@@ -302,15 +302,36 @@ export function LandingContent({ priceLabel, ctaSlot }: LandingContentProps) {
             isn&rsquo;t trying to
           </h3>
           <p className="mt-2 text-sm text-slate-600">
-            A small number of genuinely complex situations are listed
-            openly in the app itself, each with where to get real advice —
-            rather than left for the calculator to guess at quietly:
+            These situations are listed openly in the app itself, each with
+            where to get real advice, rather than left for the calculator to
+            guess at quietly:
           </p>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600">
+          <h4 className="mt-4 text-[13px] font-semibold uppercase tracking-wide text-amber-800">
+            Capital gains and business
+          </h4>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-slate-600">
             <li>Business Asset Disposal Relief and Investors&rsquo; Relief</li>
-            <li>Partial Private Residence Relief</li>
-            <li>Combined employment and self-employment NI caps</li>
-            <li>Non-UK residence and the foreign income and gains regime</li>
+            <li>Partial Private Residence Relief (a let period, business use, or time away)</li>
+            <li>Foreign tax credit relief on capital gains</li>
+            <li>Capital allowances for business vehicles</li>
+          </ul>
+          <h4 className="mt-4 text-[13px] font-semibold uppercase tracking-wide text-amber-800">
+            Income, allowances and pensions
+          </h4>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-slate-600">
+            <li>The combined employment and self-employment National Insurance cap</li>
+            <li>Pension Annual Allowance tapering</li>
+            <li>Benefits in kind (P11D)</li>
+            <li>Marriage Allowance: checking your partner&rsquo;s side of the transfer</li>
+            <li>Blind Person&rsquo;s Allowance and Married Couple&rsquo;s Allowance</li>
+          </ul>
+          <h4 className="mt-4 text-[13px] font-semibold uppercase tracking-wide text-amber-800">
+            Residence, filing and other taxes
+          </h4>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-slate-600">
+            <li>Non-UK residence, the Statutory Residence Test, and the foreign income and gains regime</li>
+            <li>Self Assessment payments on account</li>
+            <li>VAT, Inheritance Tax, and property purchase taxes (Stamp Duty Land Tax, Land and Buildings Transaction Tax, Land Transaction Tax)</li>
           </ul>
         </div>
       </section>
