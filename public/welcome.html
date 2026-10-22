@@ -112,19 +112,13 @@
     max-width: 46ch;
     color: var(--body);
   }
-  .pitch { margin-top: 28px; max-width: 520px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 14px 16px; }
-  .pitch-row { display: flex; align-items: center; gap: 12px; }
-  .pitch-btn { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  .pitch-btn svg { width: 18px; height: 18px; fill: currentColor; }
-  .pitch-btn:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
-  .pitch-title { margin: 0; font-weight: 700; font-size: 15px; }
-  .pitch-bar { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
-  .pitch-bar input { flex: 1; min-width: 0; accent-color: var(--brand); }
-  .pitch-time { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .pitch details { margin-top: 10px; font-size: 14px; color: var(--muted); }
-  .pitch summary { cursor: pointer; font-weight: 600; color: var(--brand); }
+  .pitch { margin-top: 28px; max-width: 520px; }
+  .pitch > details { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 14px 16px; }
+  .pitch > details > summary { cursor: pointer; font-weight: 700; font-size: 15px; line-height: 1.4; }
+  .pitch audio { display: block; width: 100%; margin-top: 12px; }
+  .pitch details details { margin-top: 12px; font-size: 14px; color: var(--muted); }
+  .pitch details details summary { cursor: pointer; font-weight: 600; color: var(--brand); text-decoration: underline; text-underline-offset: 4px; }
   .pitch details p { margin: 8px 0 0; line-height: 1.55; }
-  .pitch-err { color: #c0392b; font-size: 13px; margin: 8px 0 0; }
   .hero .cta-row { margin-top: 32px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
   .btn-primary {
     display: inline-block;
@@ -303,20 +297,11 @@
           <span class="price-note"><strong>£4.99</strong>, once — no subscription</span>
         </div>
         <div class="pitch" id="pitch">
-          <div class="pitch-row">
-            <button type="button" class="pitch-btn" id="pitch-btn" aria-label="Play the audio overview"></button>
-            <div style="flex:1;min-width:0">
-              <p class="pitch-title">Hear how it works</p>
-              <div class="pitch-bar">
-                <input type="range" id="pitch-seek" min="0" max="1" step="1" value="0" disabled aria-label="Position in the audio overview">
-                <span class="pitch-time" id="pitch-time">1:19</span>
-              </div>
-            </div>
-          </div>
-          <p class="pitch-err" id="pitch-err" role="alert" hidden>The audio couldn't be played. You can read the transcript instead.</p>
-          <audio id="pitch-audio" src="/audio/pitch-v3.mp3" preload="none"></audio>
+          <details open>
+            <summary>Hear how it works (about 80 seconds)</summary>
+            <audio controls preload="metadata" src="/audio/pitch-v3.mp3" aria-label="Audio overview of the UK Personal Tax Calculator">Your browser can't play audio. You can read the transcript below instead.</audio>
           <details>
-            <summary>Read the transcript instead</summary>
+            <summary>Read the transcript</summary>
             <p>Real tax situations are rarely just a salary. The UK Personal Tax Calculator is built for the messier ones.</p>
             <p>Enter your salary, pension, rental income, self-employment, savings, dividends and capital gains, and it works them out together, in the order HM Revenue and Customs applies them, for the tax year and region you choose, including Scotland and Wales.</p>
             <p>It handles the details that are easy to get wrong: landlords' expenses and mortgage interest relief, letting a room in your own home, losses carried forward, student loan repayments, Marriage Allowance, and the Child Benefit charge.</p>
@@ -326,29 +311,8 @@
             <p>Sign in, pay once, and use it for every tax year it supports.</p>
             <p>It is an estimate to help you understand where you stand, not a replacement for a tax return or professional advice.</p>
           </details>
+          </details>
         </div>
-        <script>
-        (function () {
-          var a = document.getElementById('pitch-audio'), b = document.getElementById('pitch-btn'),
-              r = document.getElementById('pitch-seek'), t = document.getElementById('pitch-time'),
-              e = document.getElementById('pitch-err');
-          var PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>';
-          var PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
-          function f(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
-          function show(p) { b.innerHTML = p ? PAUSE : PLAY; b.setAttribute('aria-label', p ? 'Pause the audio overview' : 'Play the audio overview'); }
-          show(false);
-          b.addEventListener('click', function () {
-            if (a.paused) { e.hidden = true; a.play().catch(function () { e.hidden = false; }); } else { a.pause(); }
-          });
-          a.addEventListener('play', function () { show(true); });
-          a.addEventListener('pause', function () { show(false); });
-          a.addEventListener('ended', function () { show(false); a.currentTime = 0; });
-          a.addEventListener('error', function () { e.hidden = false; show(false); });
-          a.addEventListener('loadedmetadata', function () { r.max = Math.round(a.duration); r.disabled = false; });
-          a.addEventListener('timeupdate', function () { r.value = a.currentTime; t.textContent = f(a.currentTime) + ' / ' + f(a.duration || 0); });
-          r.addEventListener('input', function () { a.currentTime = Number(r.value); });
-        })();
-        </script>
       </div>
     </div>
   </section>
