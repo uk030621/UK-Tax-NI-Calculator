@@ -2263,6 +2263,23 @@ function ResultCard({ result, welsh }: { result: CalculationResult; welsh: boole
           />
         )}
 
+        {result.nationalInsurance.total > 0 && result.nationalInsuranceClass4.total > 0 && (
+          <div
+            role="note"
+            className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-900"
+          >
+            <p className="font-semibold">Worth checking: the National Insurance annual maximum</p>
+            <p className="mt-1">
+              You have both a salary and self-employment profit. There is an annual maximum on
+              your combined Class 1 and Class 4 National Insurance, and this calculator doesn&rsquo;t
+              apply it, because it depends on what you have actually paid across both. The
+              National Insurance above may therefore be more than you need to pay. HM Revenue and
+              Customs or a Chartered Accountant can tell you whether you are due a refund, or can
+              defer part of your Class 4 payment.
+            </p>
+          </div>
+        )}
+
         {result.class2.profit > 0 && (
           <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
             {result.class2.treatedAsPaid ? (
